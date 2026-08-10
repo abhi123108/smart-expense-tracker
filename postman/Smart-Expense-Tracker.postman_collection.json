@@ -1,0 +1,436 @@
+{
+  "info": {
+    "_postman_id": "a1a1a1a1-0000-4a1a-9a1a-000000000000",
+    "name": "Smart Expense Tracker with AI",
+    "description": "Full API collection for the Smart Expense Tracker backend: Auth, Expenses, OCR bill scanning, Budgets, and AI-powered Reports.\n\n## How to use\n1. Import both this collection and `Smart-Expense-Tracker.postman_environment.json`, then select that environment (top-right dropdown).\n2. Make sure the backend is running (`npm run dev` in `backend/`, or `docker compose up`) at the `baseUrl` (default `http://localhost:5000`).\n3. Run **Auth > Register User** (or **Login User** if you already have an account) - this automatically saves the JWT into the `token` environment variable, which every other request uses via Bearer auth.\n4. Run **Expenses > Create Expense** - this automatically saves the created expense's ID into `expenseId`, which the Get/Update/Delete-by-id requests then use automatically.\n5. Run **Budgets > Set Budget** similarly auto-saves `budgetId`.\n6. For **OCR > Scan Bill**, manually attach a receipt image file to the form-data body before sending.\n\nTip: use the collection's **Runner** to execute the whole \"Auth\" and \"Expenses\" folders top-to-bottom for a quick smoke test of the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "expenseId", "value": "", "type": "string" },
+    { "key": "budgetId", "value": "", "type": "string" },
+    { "key": "receiptImage", "value": "", "type": "string" },
+    { "key": "ocrRawText", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('token', data.token);",
+                  "    pm.test('Response contains a JWT token', function () {",
+                  "        pm.expect(data.token).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "    pm.test('Password hash is never returned', function () {",
+                  "        pm.expect(data.password).to.be.undefined;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"demo@expensetracker.com\",\n  \"password\": \"demo1234\",\n  \"currency\": \"INR\",\n  \"monthlyIncome\": 60000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "description": "Creates a new user and returns a JWT. Automatically saves the token into the `token` environment variable for use by every other request in this collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('token', data.token);",
+                  "    pm.test('Response contains a JWT token', function () {",
+                  "        pm.expect(data.token).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@expensetracker.com\",\n  \"password\": \"demo1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "Logs in an existing user and saves the returned JWT into the `token` variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Returns the logged-in user\\'s email', function () {",
+                  "    pm.expect(pm.response.json().email).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/profile", "host": ["{{baseUrl}}"], "path": ["api", "auth", "profile"] },
+            "description": "Requires Bearer token (auto-applied from the `token` variable)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User Updated\",\n  \"monthlyIncome\": 65000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/profile", "host": ["{{baseUrl}}"], "path": ["api", "auth", "profile"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        {
+          "name": "Create Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('expenseId', data._id);",
+                  "    pm.test('Expense has an id and correct amount', function () {",
+                  "        pm.expect(data._id).to.be.a('string');",
+                  "        pm.expect(data.amount).to.eql(250);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lunch at Cafe\",\n  \"amount\": 250,\n  \"category\": \"Food\",\n  \"date\": \"2026-08-05\",\n  \"paymentMethod\": \"UPI\",\n  \"notes\": \"Team lunch\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/expenses", "host": ["{{baseUrl}}"], "path": ["api", "expenses"] },
+            "description": "Categories: Food, Transport, Shopping, Bills, Entertainment, Health, Groceries, Rent, Education, Other.\nAuto-saves the created expense's `_id` into `expenseId` for the requests below."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Expenses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses?page=1&limit=20&sort=-date",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "-date" },
+                { "key": "category", "value": "Food", "disabled": true },
+                { "key": "startDate", "value": "2026-08-01", "disabled": true },
+                { "key": "endDate", "value": "2026-08-31", "disabled": true }
+              ]
+            },
+            "description": "Supports optional filters: category, startDate, endDate (enable the disabled query params above as needed)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Expense Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/expenses/summary", "host": ["{{baseUrl}}"], "path": ["api", "expenses", "summary"] },
+            "description": "Returns today/week/month totals, category breakdown, and overall budget status (if an 'Overall' budget is set)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Expense By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lunch at Cafe (updated)\",\n  \"amount\": 275\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Expense",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OCR (Bill Scanning)",
+      "item": [
+        {
+          "name": "Scan Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('receiptImage', data.receiptImage);",
+                  "    pm.collectionVariables.set('ocrRawText', data.rawText || '');",
+                  "    pm.test('Returns a parsed amount and category', function () {",
+                  "        pm.expect(data).to.have.property('amount');",
+                  "        pm.expect(data).to.have.property('category');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "bill", "type": "file", "src": [], "description": "Attach a photo of a receipt/bill here (jpg, jpeg, png, or webp, max 5MB)" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/ocr/scan", "host": ["{{baseUrl}}"], "path": ["api", "ocr", "scan"] },
+            "description": "Runs Tesseract.js OCR on the uploaded image and returns a parsed (but NOT yet saved) expense: amount, date, merchant/title, guessed category, and a `confidence` flag. Review the fields, then call **Confirm OCR Expense** to actually save it.\n\n⚠️ Before sending: click the 'bill' field's file picker (in the Body tab) and select a receipt image - Postman collections can't embed a file automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm OCR Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('expenseId', pm.response.json()._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Big Bazaar Supermarket\",\n  \"amount\": 389,\n  \"category\": \"Groceries\",\n  \"date\": \"2026-07-15\",\n  \"paymentMethod\": \"Card\",\n  \"receiptImage\": \"{{receiptImage}}\",\n  \"rawText\": \"{{ocrRawText}}\",\n  \"notes\": \"Scanned via OCR\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/ocr/confirm", "host": ["{{baseUrl}}"], "path": ["api", "ocr", "confirm"] },
+            "description": "Saves the (possibly user-corrected) OCR result as an actual expense. In the real frontend flow, these field values come pre-filled from the /ocr/scan response - here you can edit them manually to simulate the user correcting a misread field."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Budgets",
+      "item": [
+        {
+          "name": "Set Budget",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('budgetId', pm.response.json()._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Food\",\n  \"monthlyLimit\": 5000,\n  \"alertThresholdPercent\": 80\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"] },
+            "description": "Category can be any expense category, or 'Overall' for a total monthly budget across everything. This is an upsert - posting again with the same category updates the existing budget instead of duplicating it."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Budgets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Budget Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/budgets/alerts", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "alerts"] },
+            "description": "Returns active alerts ('warning' or 'exceeded') for any budget whose spend has crossed its alert threshold or limit this month."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Budget",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/budgets/{{budgetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budgets", "{{budgetId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports & AI",
+      "item": [
+        {
+          "name": "Get Monthly Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/monthly?year=2026&month=8",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "monthly"],
+              "query": [
+                { "key": "year", "value": "2026" },
+                { "key": "month", "value": "8" }
+              ]
+            },
+            "description": "Returns category breakdown, daily spending trend, payment-method breakdown, and totals for the given month."
+          },
+          "response": []
+        },
+        {
+          "name": "Get AI Spending Prediction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/reports/prediction", "host": ["{{baseUrl}}"], "path": ["api", "reports", "prediction"] },
+            "description": "Runs linear regression over your last 6 months of spending to predict next month's total (with a trend direction and confidence score), plus category-level anomaly detection via z-score."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
