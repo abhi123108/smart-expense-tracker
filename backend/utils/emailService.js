@@ -559,10 +559,191 @@ async function sendBudgetAlertEmail({
   return true;
 }
 
+/// =====================================================
+// SEND PASSWORD RESET EMAIL
 // =====================================================
-// EXPORT
-// =====================================================
+
+async function sendPasswordResetEmail({
+  to,
+  name,
+  resetToken,
+}) {
+  const mailer = getTransporter();
+
+  if (!mailer) {
+    throw new Error('SMTP settings are not configured');
+  }
+
+  const frontendUrl =
+    process.env.CLIENT_URL ||
+    'http://localhost:5173';
+
+  const resetUrl =
+    `${frontendUrl}/reset-password/${resetToken}`;
+
+  const userName = name || 'there';
+
+  const subject = 'ExpenseAI: Reset your password';
+
+  const text = [
+    `Hi ${userName},`,
+    '',
+    'We received a request to reset your ExpenseAI password.',
+    '',
+    'Use the link below to create a new password:',
+    resetUrl,
+    '',
+    'This link will expire in 15 minutes.',
+    '',
+    'If you did not request a password reset, you can safely ignore this email.',
+    '',
+    'ExpenseAI',
+  ].join('\n');
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset your ExpenseAI password</title>
+</head>
+
+<body style="
+  margin:0;
+  padding:0;
+  background:#f5f7fb;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#172033;
+">
+
+  <div style="
+    padding:35px 15px;
+    background:#f5f7fb;
+  ">
+
+    <div style="
+      max-width:600px;
+      margin:0 auto;
+      background:#ffffff;
+      border:1px solid #e6e9f0;
+      border-radius:18px;
+      overflow:hidden;
+    ">
+
+      <div style="
+        padding:28px 30px;
+        background:linear-gradient(135deg,#24283f,#5557dd);
+        color:#ffffff;
+      ">
+        <div style="
+          font-size:13px;
+          font-weight:700;
+          letter-spacing:2px;
+        ">
+          EXPENSEAI
+        </div>
+
+        <h1 style="
+          margin:10px 0 0;
+          font-size:24px;
+        ">
+          Reset your password
+        </h1>
+      </div>
+
+      <div style="padding:30px;">
+
+        <p style="font-size:16px;">
+          Hi <strong>${userName}</strong>,
+        </p>
+
+        <p style="
+          font-size:14px;
+          line-height:1.7;
+          color:#667085;
+        ">
+          We received a request to reset your ExpenseAI password.
+          Click the button below to create a new password.
+        </p>
+
+        <div style="
+          text-align:center;
+          margin:30px 0;
+        ">
+          <a
+            href="${resetUrl}"
+            target="_blank"
+            style="
+              display:inline-block;
+              padding:14px 26px;
+              background:#5557dd;
+              color:#ffffff;
+              text-decoration:none;
+              border-radius:10px;
+              font-size:14px;
+              font-weight:700;
+            "
+          >
+            Reset Password →
+          </a>
+        </div>
+
+        <p style="
+          font-size:13px;
+          line-height:1.6;
+          color:#667085;
+        ">
+          This password reset link will expire in
+          <strong>15 minutes</strong>.
+        </p>
+
+        <p style="
+          font-size:13px;
+          line-height:1.6;
+          color:#667085;
+        ">
+          If you did not request this password reset,
+          you can safely ignore this email.
+        </p>
+
+        <div style="
+          margin-top:28px;
+          padding-top:20px;
+          border-top:1px solid #e6e9f0;
+          text-align:center;
+          font-size:12px;
+          color:#98a2b3;
+        ">
+          This is an automated email from ExpenseAI.
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
+`;
+
+  await mailer.sendMail({
+    from:
+      process.env.MAIL_FROM ||
+      process.env.SMTP_USER,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  console.log(`Password reset email sent to ${to}`);
+
+  return true;
+}
 
 module.exports = {
   sendBudgetAlertEmail,
+  sendPasswordResetEmail,
 };
