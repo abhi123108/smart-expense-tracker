@@ -1,20 +1,25 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
 // Attach JWT token to every request automatically
 api.interceptors.request.use((config) => {
   const userInfo = localStorage.getItem('userInfo');
+
   if (userInfo) {
     const { token } = JSON.parse(userInfo);
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+
   return config;
 });
 
-// Auto-logout on 401 (expired/invalid token)
+// Auto-logout on 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -22,6 +27,7 @@ api.interceptors.response.use(
       localStorage.removeItem('userInfo');
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
