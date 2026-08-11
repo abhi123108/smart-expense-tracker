@@ -3,11 +3,7 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getFromEmail() {
-  return (
-    process.env.RESEND_FROM ||
-    process.env.MAIL_FROM ||
-    "onboarding@resend.dev"
-  );
+  return process.env.RESEND_FROM || "onboarding@resend.dev";
 }
 
 // =====================================================
