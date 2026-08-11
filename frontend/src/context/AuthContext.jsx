@@ -10,16 +10,29 @@ export function AuthProvider({ children }) {
   });
 
   const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+    const { data } = await api.post('/auth/login', {
+      email,
+      password,
+    });
+
+    // Login ke time userInfo save hoga
     localStorage.setItem('userInfo', JSON.stringify(data));
     setUser(data);
+
     return data;
   };
 
   const register = async (name, email, password) => {
-    const { data } = await api.post('/auth/register', { name, email, password });
-    localStorage.setItem('userInfo', JSON.stringify(data));
-    setUser(data);
+    // Sirf account create hoga
+    const { data } = await api.post('/auth/register', {
+      name,
+      email,
+      password,
+    });
+
+    // YAHAN localStorage.setItem nahi karna hai
+    // YAHAN setUser(data) nahi karna hai
+
     return data;
   };
 
@@ -29,7 +42,15 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -37,6 +58,10 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+
   return ctx;
 }
