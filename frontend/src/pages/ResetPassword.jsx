@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -8,7 +8,6 @@ export default function ResetPassword() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,8 +64,7 @@ export default function ResetPassword() {
         <h2>Create a new password.</h2>
 
         <p>
-          Choose a strong password to keep your ExpenseAI
-          account secure.
+          Choose a strong password to keep your ExpenseAI account secure.
         </p>
 
         <div className="auth-points">
@@ -78,10 +76,10 @@ export default function ResetPassword() {
 
       <div className="auth-panel">
         <div className="auth-card">
-          <h1>Reset password 🔐</h1>
+          <h1>Reset password</h1>
 
           <p className="subtitle">
-            Enter and confirm your new password.
+            Enter a new password for your account.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -94,7 +92,7 @@ export default function ResetPassword() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="Enter new password"
               />
             </div>
 
