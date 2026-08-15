@@ -225,3 +225,50 @@ Each request also has built-in test scripts (status code checks, response shape 
 - The `uploads/` folder stores receipt images on local disk — fine for development, but use cloud storage in production
 - OCR accuracy depends heavily on photo quality — blurry or skewed receipts may need manual correction (this is why the app always shows a review step)
 - This is a learning/portfolio-ready project — read the "Next Steps" section above before treating it as production-hardened
+
+
+---
+
+## Copyright & Attribution
+
+© 2026 Abhinav Kumar Singh. All rights reserved.
+
+**Smart Expense Tracker / ExpenseAI** is an original full-stack
+application developed by Abhinav Kumar Singh.
+
+The original application-specific source code, architecture,
+documentation, UI implementation, and original creative content
+are proprietary to the copyright holder.
+
+This repository is publicly available for viewing and evaluation.
+No permission is granted to copy, redistribute, modify, publish,
+or commercially reuse the original project without prior written
+permission.
+
+### Third-Party Components
+
+This project uses third-party libraries, frameworks, APIs, and
+services. Those components remain the property of their respective
+authors and organizations and are governed by their respective
+licenses and terms.
+
+Third-party technologies include, but are not limited to:
+
+- React
+- Vite
+- Node.js
+- Express.js
+- MongoDB / Mongoose
+- JWT
+- bcrypt
+- Tesseract.js
+- OpenAI API
+- Resend
+- Render
+
+Their inclusion in this project does not transfer ownership of
+those technologies to the project author.
+
+---
+
+© 2026 Abhinav Kumar Singh · Smart Expense Tracker / ExpenseAI
