@@ -3,7 +3,11 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
     email: {
       type: String,
@@ -26,8 +30,26 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    currency: { type: String, default: 'INR' },
-    monthlyIncome: { type: Number, default: 0 },
+    profilePicture: {
+      type: String,
+      default: null,
+    },
+
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
+
+    currency: {
+      type: String,
+      default: 'INR',
+    },
+
+    monthlyIncome: {
+      type: Number,
+      default: 0,
+    },
 
     resetPasswordToken: {
       type: String,
@@ -39,11 +61,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
+// Hash password only when it is created or changed.
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password') || !this.password) return next();
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -51,8 +78,12 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Compare entered password with stored hash.
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  if (!this.password) return false;
+  if (!this.password) {
+    return false;
+  }
+
   return bcrypt.compare(enteredPassword, this.password);
 };
 

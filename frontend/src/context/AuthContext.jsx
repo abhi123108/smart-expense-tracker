@@ -15,7 +15,17 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    // Login ke time userInfo save hoga
+    localStorage.setItem('userInfo', JSON.stringify(data));
+    setUser(data);
+
+    return data;
+  };
+
+  const googleLogin = async (credential) => {
+    const { data } = await api.post('/auth/google', {
+      credential,
+    });
+
     localStorage.setItem('userInfo', JSON.stringify(data));
     setUser(data);
 
@@ -23,15 +33,11 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
-    // Sirf account create hoga
     const { data } = await api.post('/auth/register', {
       name,
       email,
       password,
     });
-
-    // YAHAN localStorage.setItem nahi karna hai
-    // YAHAN setUser(data) nahi karna hai
 
     return data;
   };
@@ -46,6 +52,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         login,
+        googleLogin,
         register,
         logout,
         isAuthenticated: !!user,

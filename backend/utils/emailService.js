@@ -1,37 +1,49 @@
-const { Resend } = require("resend");
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 function getFromEmail() {
-  return process.env.RESEND_FROM || "onboarding@resend.dev";
+  return (
+    process.env.MAIL_FROM ||
+    process.env.SMTP_USER ||
+    'ExpenseAI <no-reply@example.com>'
+  );
 }
 
 // =====================================================
-// SEND EMAIL USING RESEND
+// SEND EMAIL
 // =====================================================
 
 async function sendEmail({ to, subject, text, html }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not configured.");
-    throw new Error("Email service is not configured");
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error('SMTP credentials are not configured.');
+    throw new Error('Email service is not configured');
   }
 
-  const { data, error } = await resend.emails.send({
-    from: getFromEmail(),
-    to: [to],
-    subject,
-    text,
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: getFromEmail(),
+      to,
+      subject,
+      text,
+      html,
+    });
 
-  if (error) {
-    console.error("Resend email failed:", error);
-    throw new Error(error.message || "Failed to send email");
+    console.log(`Email sent successfully to ${to}. ID: ${info.messageId}`);
+
+    return true;
+  } catch (error) {
+    console.error('SMTP email failed:', error);
+    throw new Error(error.message || 'Failed to send email');
   }
-
-  console.log(`Email sent successfully to ${to}. ID: ${data.id}`);
-
-  return true;
 }
 
 // =====================================================
@@ -47,7 +59,7 @@ async function sendBudgetAlertEmail({
   spent,
   limit,
 }) {
-  const exceeded = level === "exceeded";
+  const exceeded = level === 'exceeded';
 
   const subject = exceeded
     ? `ExpenseAI: ${category} budget exceeded`
@@ -62,37 +74,37 @@ async function sendBudgetAlertEmail({
   );
 
   const formattedBudget =
-    budgetAmount.toLocaleString("en-IN");
+    budgetAmount.toLocaleString('en-IN');
 
   const formattedSpent =
-    spentAmount.toLocaleString("en-IN");
+    spentAmount.toLocaleString('en-IN');
 
   const formattedRemaining =
-    remaining.toLocaleString("en-IN");
+    remaining.toLocaleString('en-IN');
 
-  const userName = name || "there";
+  const userName = name || 'there';
 
   const dashboardUrl =
     process.env.CLIENT_URL ||
-    "http://localhost:5173";
+    'http://localhost:5173';
 
   const text = [
     `Hi ${userName},`,
-    "",
+    '',
     exceeded
       ? `Your ${category} budget has been exceeded.`
       : `Your ${category} budget has reached ${percentUsed}%.`,
-    "",
+    '',
     `Category: ${category}`,
     `Budget: ₹${formattedBudget}`,
     `Spent: ₹${formattedSpent}`,
     `Remaining: ₹${formattedRemaining}`,
     `Usage: ${percentUsed}%`,
-    "",
-    "Review your recent expenses in ExpenseAI.",
-    "",
+    '',
+    'Review your recent expenses in ExpenseAI.',
+    '',
     `Open Dashboard: ${dashboardUrl}`,
-  ].join("\n");
+  ].join('\n');
 
   const html = `
 <!DOCTYPE html>
@@ -150,8 +162,8 @@ async function sendBudgetAlertEmail({
         ">
           ${
             exceeded
-              ? "Budget Exceeded 🚨"
-              : "Budget Alert ⚠️"
+              ? 'Budget Exceeded 🚨'
+              : 'Budget Alert ⚠️'
           }
         </h1>
 
@@ -162,7 +174,6 @@ async function sendBudgetAlertEmail({
         <p style="
           margin:0 0 14px;
           font-size:16px;
-          color:#172033;
         ">
           Hi <strong>${userName}</strong>,
         </p>
@@ -201,7 +212,6 @@ async function sendBudgetAlertEmail({
                 padding:8px 0;
                 text-align:right;
                 font-weight:700;
-                color:#172033;
               ">
                 ${category}
               </td>
@@ -215,7 +225,6 @@ async function sendBudgetAlertEmail({
                 padding:8px 0;
                 text-align:right;
                 font-weight:700;
-                color:#172033;
               ">
                 ₹${formattedBudget}
               </td>
@@ -229,7 +238,6 @@ async function sendBudgetAlertEmail({
                 padding:8px 0;
                 text-align:right;
                 font-weight:700;
-                color:#172033;
               ">
                 ₹${formattedSpent}
               </td>
@@ -243,7 +251,6 @@ async function sendBudgetAlertEmail({
                 padding:8px 0;
                 text-align:right;
                 font-weight:700;
-                color:#172033;
               ">
                 ₹${formattedRemaining}
               </td>
@@ -301,19 +308,6 @@ async function sendBudgetAlertEmail({
 
         </div>
 
-        <p style="
-          margin:18px 0 0;
-          text-align:center;
-          font-size:11px;
-          line-height:1.5;
-          color:#98a2b3;
-          word-break:break-all;
-        ">
-          If the button doesn't work, open:
-          <br />
-          ${dashboardUrl}
-        </p>
-
         <div style="
           margin-top:28px;
           padding-top:20px;
@@ -352,30 +346,30 @@ async function sendPasswordResetEmail({
 }) {
   const frontendUrl =
     process.env.CLIENT_URL ||
-    "http://localhost:5173";
+    'http://localhost:5173';
 
   const resetUrl =
     `${frontendUrl}/reset-password/${resetToken}`;
 
-  const userName = name || "there";
+  const userName = name || 'there';
 
   const subject =
-    "ExpenseAI: Reset your password";
+    'ExpenseAI: Reset your password';
 
   const text = [
     `Hi ${userName},`,
-    "",
-    "We received a request to reset your ExpenseAI password.",
-    "",
-    "Use the link below to create a new password:",
+    '',
+    'We received a request to reset your ExpenseAI password.',
+    '',
+    'Use the link below to create a new password:',
     resetUrl,
-    "",
-    "This link will expire in 15 minutes.",
-    "",
-    "If you did not request a password reset, you can safely ignore this email.",
-    "",
-    "ExpenseAI",
-  ].join("\n");
+    '',
+    'This link will expire in 15 minutes.',
+    '',
+    'If you did not request this password reset, you can safely ignore this email.',
+    '',
+    'ExpenseAI',
+  ].join('\n');
 
   const html = `
 <!DOCTYPE html>
