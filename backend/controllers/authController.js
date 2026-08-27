@@ -3,10 +3,16 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { sendPasswordResetEmail } = require('../utils/emailService');
+const { OAuth2Client } = require('google-auth-library');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
+
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, currency, monthlyIncome } = req.body;
 
@@ -174,6 +180,79 @@ const getProfile = asyncHandler(async (req, res) => {
   res.json(req.user);
 });
 
+// @desc    Authenticate user with Google
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    res.status(400);
+    throw new Error('Google credential is required');
+  }
+
+  let ticket;
+
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch (error) {
+    console.error('Google token verification failed:', error);
+
+    res.status(401);
+    throw new Error('Invalid Google credential');
+  }
+
+  const payload = ticket.getPayload();
+
+  const googleId = payload.sub;
+  const email = payload.email?.toLowerCase().trim();
+  const name = payload.name || 'Google User';
+  const picture = payload.picture || null;
+
+  if (!googleId || !email) {
+    res.status(400);
+    throw new Error('Google account information is incomplete');
+  }
+
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // Existing account: link Google account if not already linked.
+    if (!user.googleId) {
+      user.googleId = googleId;
+    }
+
+    user.profilePicture = picture;
+
+    await user.save({ validateBeforeSave: false });
+  } else {
+    // New Google account.
+    user = await User.create({
+      name,
+      email,
+      googleId,
+      profilePicture: picture,
+      authProvider: 'google',
+      currency: 'INR',
+      monthlyIncome: 0,
+    });
+  }
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    currency: user.currency,
+    monthlyIncome: user.monthlyIncome,
+    profilePicture: user.profilePicture,
+    authProvider: user.authProvider,
+    token: generateToken(user._id),
+  });
+});
+
 // @desc    Update logged-in user's profile
 // @route   PUT /api/auth/profile
 // @access  Private
@@ -207,6 +286,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  googleLogin,
   forgotPassword,
   resetPassword,
   getProfile,
