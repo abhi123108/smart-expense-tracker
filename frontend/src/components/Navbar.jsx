@@ -30,16 +30,8 @@ const navItems = [
   },
 ];
 
-// =====================================================
-// BACKEND BASE URL
-// =====================================================
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") || "";
-
 export default function Navbar() {
   const navigate = useNavigate();
-
   const { user, logout } = useAuth();
 
   // =====================================================
@@ -47,16 +39,11 @@ export default function Navbar() {
   // =====================================================
 
   const [darkMode, setDarkMode] = useState(() => {
-    return (
-      localStorage.getItem("expenseai-theme") === "dark"
-    );
+    return localStorage.getItem("expenseai-theme") === "dark";
   });
 
   useEffect(() => {
-    document.body.classList.toggle(
-      "dark-mode",
-      darkMode
-    );
+    document.body.classList.toggle("dark-mode", darkMode);
 
     localStorage.setItem(
       "expenseai-theme",
@@ -100,9 +87,7 @@ export default function Navbar() {
       .split(" ")
       .filter(Boolean)
       .slice(0, 2)
-      .map((part) =>
-        part.charAt(0)
-      )
+      .map((part) => part.charAt(0))
       .join("")
       .toUpperCase() || "U";
 
@@ -110,34 +95,15 @@ export default function Navbar() {
   // PROFILE IMAGE
   // =====================================================
 
-  let profileImageUrl = null;
+  const profileImageUrl = user?.profilePicture || null;
 
-  if (user?.profilePicture) {
-    const picture = user.profilePicture;
+  // =====================================================
+  // OPEN PROFILE
+  // =====================================================
 
-    // Google profile photo
-    if (
-      picture.startsWith(
-        "https://lh3.googleusercontent.com/"
-      )
-    ) {
-      profileImageUrl =
-        `${API_BASE_URL}/api/auth/google-photo?url=${encodeURIComponent(
-          picture
-        )}`;
-    }
-
-    // Other external image URL
-    else if (picture.startsWith("http")) {
-      profileImageUrl = picture;
-    }
-
-    // Local uploaded image
-    else {
-      profileImageUrl =
-        `${API_BASE_URL}${picture}`;
-    }
-  }
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
 
   // =====================================================
   // RENDER
@@ -183,12 +149,9 @@ export default function Navbar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `nav-link ${
-                isActive ? "active" : ""
-              }`
+              `nav-link ${isActive ? "active" : ""}`
             }
           >
-
             <span className="nav-icon">
               {item.icon}
             </span>
@@ -196,7 +159,6 @@ export default function Navbar() {
             <span>
               {item.label}
             </span>
-
           </NavLink>
         ))}
 
@@ -217,7 +179,6 @@ export default function Navbar() {
           className="theme-toggle"
           onClick={toggleTheme}
         >
-
           <span className="theme-toggle-left">
 
             <span className="theme-toggle-icon">
@@ -239,10 +200,27 @@ export default function Navbar() {
         </button>
 
         {/* =================================================
-            LOGGED-IN USER
+            LOGGED-IN USER / PROFILE
         ================================================= */}
 
-        <div className="user-mini">
+        <div
+          className="user-mini"
+          onClick={handleProfileClick}
+          role="button"
+          tabIndex={0}
+          title="Open profile"
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" ||
+              event.key === " "
+            ) {
+              handleProfileClick();
+            }
+          }}
+          style={{
+            cursor: "pointer",
+          }}
+        >
 
           {/* PROFILE AVATAR */}
 
@@ -262,7 +240,6 @@ export default function Navbar() {
           >
 
             {profileImageUrl ? (
-
               <img
                 src={profileImageUrl}
                 alt={`${userName} profile`}
@@ -279,17 +256,20 @@ export default function Navbar() {
                     profileImageUrl
                   );
 
-                  event.currentTarget.style.display =
-                    "none";
+                  event.currentTarget.style.display = "none";
+
+                  const parent =
+                    event.currentTarget.parentElement;
+
+                  if (parent) {
+                    parent.innerHTML = `<span>${initials}</span>`;
+                  }
                 }}
               />
-
             ) : (
-
               <span>
                 {initials}
               </span>
-
             )}
 
           </div>

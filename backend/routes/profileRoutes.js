@@ -5,7 +5,7 @@ const {
   removeProfilePhoto,
 } = require('../controllers/profileController');
 
-const protect = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();

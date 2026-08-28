@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import React, { useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { uploadProfilePhoto } from "../api/profileApi";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") || "";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -11,337 +11,432 @@ export default function Profile() {
   const fileInputRef = useRef(null);
 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [preview, setPreview] = useState(
-    user?.profilePicture
-      ? user.profilePicture.startsWith('http')
-        ? user.profilePicture
-        : `${API_BASE_URL}${user.profilePicture}`
-      : null
-  );
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const userName =
     user?.name ||
     user?.fullName ||
     user?.username ||
-    'User';
+    "User";
 
   const userEmail =
-    user?.email || '';
+    user?.email ||
+    "ExpenseAI User";
 
   const initials =
     userName
-      .split(' ')
+      .split(" ")
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() || 'U';
+      .join("")
+      .toUpperCase() || "U";
+
+  const getProfileImageUrl = () => {
+    if (!user?.profilePicture) {
+      return null;
+    }
+
+    const picture = user.profilePicture;
+
+    if (picture.startsWith("http")) {
+      return picture;
+    }
+
+    return `${API_BASE_URL}${picture}`;
+  };
+
+  const profileImageUrl =
+    previewUrl || getProfileImageUrl();
+
+  const handleChoosePhoto = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    setMessage('');
-    setError('');
+    setMessage("");
+    setError("");
 
     const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
     ];
 
     if (!allowedTypes.includes(file.type)) {
       setError(
-        'Only JPG, PNG, WEBP and GIF images are allowed.'
+        "Please select a JPG, PNG, WEBP or GIF image."
       );
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError(
-        'Image size must be less than 5 MB.'
-      );
+      setError("Image size must be less than 5 MB.");
       return;
     }
 
     setSelectedFile(file);
 
-    const imageUrl = URL.createObjectURL(file);
-    setPreview(imageUrl);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select an image first.');
-      return;
-    }
+    if (!selectedFile) return;
 
-    setLoading(true);
-    setMessage('');
-    setError('');
+    setUploading(true);
+    setMessage("");
+    setError("");
 
     try {
-      const formData = new FormData();
-
-      formData.append(
-        'profilePicture',
+      const response = await uploadProfilePhoto(
         selectedFile
       );
 
-      const { data } = await api.post(
-        '/auth/profile/photo',
-        formData
-      );
+      const uploadedPicture =
+        response?.profilePicture;
 
-      const profilePicture = data.profilePicture;
+      if (uploadedPicture) {
+        const fullUrl = uploadedPicture.startsWith("http")
+          ? uploadedPicture
+          : `${API_BASE_URL}${uploadedPicture}`;
 
-      const imageUrl = profilePicture.startsWith('http')
-        ? profilePicture
-        : `${API_BASE_URL}${profilePicture}`;
+        setPreviewUrl(fullUrl);
 
-      setPreview(imageUrl);
-      setSelectedFile(null);
-      setMessage(
-        'Profile photo updated successfully.'
-      );
-
-      // Update stored user information
-      const storedUser =
-        localStorage.getItem('userInfo');
-
-      if (storedUser) {
-        const userInfo = JSON.parse(storedUser);
-
-        userInfo.profilePicture =
-          profilePicture;
+        const storedUser =
+          JSON.parse(
+            localStorage.getItem("userInfo")
+          ) || {};
 
         localStorage.setItem(
-          'userInfo',
-          JSON.stringify(userInfo)
+          "userInfo",
+          JSON.stringify({
+            ...storedUser,
+            profilePicture: uploadedPicture,
+          })
         );
       }
+
+      setSelectedFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      setMessage(
+        "Profile photo updated successfully."
+      );
     } catch (err) {
+      console.error(
+        "Profile photo upload failed:",
+        err
+      );
+
       setError(
-        err.response?.data?.message ||
-          'Failed to upload profile photo.'
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Unable to upload profile photo."
       );
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: '40px 24px',
-      }}
-    >
-      <div
-        style={{
-          marginBottom: '30px',
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: '28px',
-          }}
-        >
-          Profile
-        </h1>
+    <div className="profile-page">
 
-        <p
-          style={{
-            marginTop: '8px',
-            color: '#667085',
-          }}
-        >
-          Manage your ExpenseAI profile.
-        </p>
+      {/* HEADER */}
+
+      <div className="profile-page-header">
+        <div>
+          <div className="profile-eyebrow">
+            ACCOUNT SETTINGS
+          </div>
+
+          <h1>Profile</h1>
+
+          <p>
+            Manage your personal information and
+            profile photo.
+          </p>
+        </div>
       </div>
 
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e6e9f0',
-          borderRadius: '18px',
-          padding: '32px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            marginBottom: '32px',
-          }}
-        >
-          <div
-            style={{
-              width: '110px',
-              height: '110px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              background: '#5557dd',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '32px',
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {preview ? (
+      {/* PROFILE HERO */}
+
+      <section className="profile-card profile-hero-card">
+
+        <div className="profile-hero-left">
+
+          <div className="profile-large-avatar">
+            {profileImageUrl ? (
               <img
-                src={preview}
-                alt={userName}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                src={profileImageUrl}
+                alt={`${userName} profile`}
+                onError={(event) => {
+                  event.currentTarget.style.display =
+                    "none";
                 }}
               />
             ) : (
-              initials
+              <span>{initials}</span>
             )}
           </div>
 
-          <div>
-            <h2
-              style={{
-                margin: '0 0 6px',
-              }}
-            >
-              {userName}
-            </h2>
+          <div className="profile-identity">
 
-            <p
-              style={{
-                margin: 0,
-                color: '#667085',
-              }}
-            >
-              {userEmail}
-            </p>
+            <div className="profile-name-row">
+              <h2>{userName}</h2>
+
+              <span className="profile-status">
+                <span className="status-dot" />
+                Active
+              </span>
+            </div>
+
+            <p>{userEmail}</p>
+
+            <div className="profile-provider">
+              {user?.authProvider === "google" ? (
+                <>
+                  <span className="provider-icon">
+                    G
+                  </span>
+                  Signed in with Google
+                </>
+              ) : (
+                <>
+                  <span className="provider-icon">
+                    ✓
+                  </span>
+                  ExpenseAI account
+                </>
+              )}
+            </div>
+
           </div>
         </div>
 
-        <div
-          style={{
-            borderTop: '1px solid #e6e9f0',
-            paddingTop: '28px',
-          }}
-        >
-          <h3
-            style={{
-              marginTop: 0,
-            }}
-          >
-            Profile photo
-          </h3>
+      </section>
 
-          <p
-            style={{
-              color: '#667085',
-              fontSize: '14px',
-              lineHeight: 1.6,
+      {/* MAIN GRID */}
+
+      <div className="profile-grid">
+
+        {/* PHOTO CARD */}
+
+        <section className="profile-card profile-photo-card">
+
+          <div className="profile-section-heading">
+            <div className="section-icon">
+              📷
+            </div>
+
+            <div>
+              <h3>Profile photo</h3>
+              <p>
+                Personalize your ExpenseAI account.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`photo-upload-zone ${
+              selectedFile
+                ? "photo-upload-zone-selected"
+                : ""
+            }`}
+            onClick={handleChoosePhoto}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" ||
+                event.key === " "
+              ) {
+                handleChoosePhoto();
+              }
             }}
           >
-            Upload a custom profile photo. JPG, PNG,
-            WEBP and GIF files up to 5 MB are supported.
-          </p>
+
+            <div className="upload-preview">
+
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile preview"
+                />
+              ) : (
+                <span>{initials}</span>
+              )}
+
+              <div className="upload-camera">
+                📷
+              </div>
+
+            </div>
+
+            <div className="upload-copy">
+
+              <strong>
+                {selectedFile
+                  ? selectedFile.name
+                  : "Choose a profile photo"}
+              </strong>
+
+              <span>
+                JPG, PNG, WEBP or GIF
+                <br />
+                Maximum file size: 5 MB
+              </span>
+
+            </div>
+
+            <button
+              type="button"
+              className="profile-secondary-button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleChoosePhoto();
+              }}
+            >
+              Browse
+            </button>
+
+          </div>
 
           <input
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={handleFileChange}
-            style={{
-              display: 'none',
-            }}
+            hidden
           />
 
-          <div
-            style={{
-              display: 'flex',
-              gap: '12px',
-              flexWrap: 'wrap',
-              marginTop: '20px',
-            }}
-          >
+          {selectedFile && (
             <button
               type="button"
-              className="btn btn-primary"
-              onClick={() =>
-                fileInputRef.current?.click()
-              }
-              disabled={loading}
+              className="profile-upload-button"
+              onClick={handleUpload}
+              disabled={uploading}
             >
-              Choose Photo
+              {uploading
+                ? "Uploading..."
+                : "Save profile photo"}
             </button>
-
-            {selectedFile && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleUpload}
-                disabled={loading}
-              >
-                {loading
-                  ? 'Uploading...'
-                  : 'Save Photo'}
-              </button>
-            )}
-          </div>
-
-          {selectedFile && (
-            <p
-              style={{
-                marginTop: '14px',
-                fontSize: '13px',
-                color: '#667085',
-              }}
-            >
-              Selected: {selectedFile.name}
-            </p>
           )}
 
           {message && (
-            <p
-              style={{
-                marginTop: '16px',
-                color: 'green',
-                fontSize: '14px',
-              }}
-            >
-              {message}
-            </p>
+            <div className="profile-success">
+              ✓ {message}
+            </div>
           )}
 
           {error && (
-            <p
-              style={{
-                marginTop: '16px',
-                color: '#d92d20',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </p>
+            <div className="profile-error">
+              ⚠ {error}
+            </div>
           )}
-        </div>
+
+        </section>
+
+        {/* ACCOUNT INFO */}
+
+        <section className="profile-card account-info-card">
+
+          <div className="profile-section-heading">
+            <div className="section-icon">
+              👤
+            </div>
+
+            <div>
+              <h3>Account information</h3>
+              <p>
+                Your current ExpenseAI account details.
+              </p>
+            </div>
+          </div>
+
+          <div className="account-info-list">
+
+            <div className="account-info-item">
+              <span className="info-label">
+                Full name
+              </span>
+
+              <strong>
+                {userName}
+              </strong>
+            </div>
+
+            <div className="account-info-item">
+              <span className="info-label">
+                Email address
+              </span>
+
+              <strong>
+                {userEmail}
+              </strong>
+            </div>
+
+            <div className="account-info-item">
+              <span className="info-label">
+                Currency
+              </span>
+
+              <strong>
+                {user?.currency || "INR"} ₹
+              </strong>
+            </div>
+
+            <div className="account-info-item">
+              <span className="info-label">
+                Monthly income
+              </span>
+
+              <strong>
+                ₹
+                {Number(
+                  user?.monthlyIncome || 0
+                ).toLocaleString("en-IN")}
+              </strong>
+            </div>
+
+          </div>
+
+        </section>
+
       </div>
+
+      {/* SECURITY NOTE */}
+
+      <section className="profile-security-card">
+
+        <div className="security-icon">
+          🔒
+        </div>
+
+        <div>
+          <strong>
+            Your account is secure
+          </strong>
+
+          <p>
+            Your profile information is protected
+            and only accessible to you.
+          </p>
+        </div>
+
+      </section>
+
     </div>
   );
 }

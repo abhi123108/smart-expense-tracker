@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Budget from './pages/Budget';
 import Profile from './pages/Profile';
 
+
 function ProtectedLayout({ children }) {
   const { isAuthenticated } = useAuth();
 
