@@ -10,6 +10,10 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 );
 
+// =====================================================
+// REGISTER USER
+// =====================================================
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -49,6 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
     currency,
     monthlyIncome,
     authProvider: 'local',
+    profilePicture: null,
   });
 
   res.status(201).json({
@@ -62,6 +67,10 @@ const registerUser = asyncHandler(async (req, res) => {
     token: generateToken(user._id),
   });
 });
+
+// =====================================================
+// LOGIN USER
+// =====================================================
 
 // @desc    Authenticate user
 // @route   POST /api/auth/login
@@ -87,7 +96,7 @@ const loginUser = asyncHandler(async (req, res) => {
     user.password &&
     (await user.matchPassword(password))
   ) {
-    res.json({
+    res.status(200).json({
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -102,6 +111,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error('Invalid email or password');
   }
 });
+
+// =====================================================
+// FORGOT PASSWORD
+// =====================================================
 
 // @desc    Request password reset
 // @route   POST /api/auth/forgot-password
@@ -131,7 +144,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     return res.status(200).json({ message });
   }
 
-  // Generate a cryptographically secure random token.
+  // Generate cryptographically secure random token.
   const resetToken = crypto
     .randomBytes(32)
     .toString('hex');
@@ -180,6 +193,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
+// =====================================================
+// RESET PASSWORD
+// =====================================================
+
 // @desc    Reset password using token
 // @route   POST /api/auth/reset-password/:token
 // @access  Public
@@ -220,14 +237,13 @@ const resetPassword = asyncHandler(async (req, res) => {
     );
   }
 
-  // Update password.
   user.password = password;
 
   // Invalidate reset token immediately.
   user.resetPasswordToken = null;
   user.resetPasswordExpire = null;
 
-  // User model will hash the password automatically.
+  // User model hashes the password automatically.
   await user.save();
 
   res.status(200).json({
@@ -235,6 +251,10 @@ const resetPassword = asyncHandler(async (req, res) => {
       'Password reset successful. Please login with your new password.',
   });
 });
+
+// =====================================================
+// GOOGLE LOGIN
+// =====================================================
 
 // @desc    Authenticate user with Google
 // @route   POST /api/auth/google
@@ -289,6 +309,7 @@ const googleLogin = asyncHandler(async (req, res) => {
   }
 
   const googleId = payload.sub;
+
   const email = payload.email
     ?.toLowerCase()
     .trim();
@@ -296,6 +317,7 @@ const googleLogin = asyncHandler(async (req, res) => {
   const name =
     payload.name || 'Google User';
 
+  // Google profile picture.
   const picture =
     payload.picture || null;
 
@@ -322,15 +344,18 @@ const googleLogin = asyncHandler(async (req, res) => {
 
   if (user) {
     // Existing account.
-    // Link Google account if it has not been linked yet.
+
+    // Link Google account if not already linked.
     if (!user.googleId) {
       user.googleId = googleId;
     }
 
-    // Update Google profile picture.
-    user.profilePicture = picture;
+    // Save/update Google profile picture.
+    if (picture) {
+      user.profilePicture = picture;
+    }
 
-    // Do not change an existing local account
+    // Do not convert an existing local account
     // into a Google-only account.
     if (!user.authProvider) {
       user.authProvider = 'local';
@@ -340,7 +365,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       validateBeforeSave: false,
     });
   } else {
-    // Create a new Google account.
+    // Create new Google account.
     user = await User.create({
       name,
       email,
@@ -359,18 +384,38 @@ const googleLogin = asyncHandler(async (req, res) => {
     email: user.email,
     currency: user.currency,
     monthlyIncome: user.monthlyIncome,
+
+    // Profile picture returned to frontend.
     profilePicture: user.profilePicture,
+
     authProvider: user.authProvider,
+
     token: generateToken(user._id),
   });
 });
+
+// =====================================================
+// GET PROFILE
+// =====================================================
 
 // @desc    Get logged-in user's profile
 // @route   GET /api/auth/profile
 // @access  Private
 const getProfile = asyncHandler(async (req, res) => {
-  res.json(req.user);
+  res.status(200).json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    currency: req.user.currency,
+    monthlyIncome: req.user.monthlyIncome,
+    profilePicture: req.user.profilePicture,
+    authProvider: req.user.authProvider,
+  });
 });
+
+// =====================================================
+// UPDATE PROFILE
+// =====================================================
 
 // @desc    Update logged-in user's profile
 // @route   PUT /api/auth/profile
@@ -399,9 +444,17 @@ const updateProfile = asyncHandler(async (req, res) => {
     user.password = req.body.password;
   }
 
+  // Allow profile picture URL to be updated.
+  if (
+    req.body.profilePicture !== undefined
+  ) {
+    user.profilePicture =
+      req.body.profilePicture;
+  }
+
   const updated = await user.save();
 
-  res.json({
+  res.status(200).json({
     _id: updated._id,
     name: updated.name,
     email: updated.email,
@@ -412,6 +465,42 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// =====================================================
+// EXPORTS
+// =====================================================
+
+
+// @desc    Upload/update profile picture
+// @route   POST /api/auth/profile/photo
+// @access  Private
+const uploadProfilePhoto = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error('Please select an image');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Store the uploaded image URL
+  user.profilePicture = `/uploads/profile/${req.file.filename}`;
+
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  res.status(200).json({
+    message: 'Profile photo updated successfully',
+    profilePicture: user.profilePicture,
+  });
+});
+
+
+
 module.exports = {
   registerUser,
   loginUser,
@@ -420,4 +509,5 @@ module.exports = {
   resetPassword,
   getProfile,
   updateProfile,
+  uploadProfilePhoto,
 };

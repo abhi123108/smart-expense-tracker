@@ -12,6 +12,7 @@ import AddExpense from './pages/AddExpense';
 import ScanBill from './pages/ScanBill';
 import Reports from './pages/Reports';
 import Budget from './pages/Budget';
+import Profile from './pages/Profile';
 
 function ProtectedLayout({ children }) {
   const { isAuthenticated } = useAuth();
@@ -89,11 +90,22 @@ export default function App() {
         }
       />
 
+         <Route
+  path="/profile"
+  element={
+    <ProtectedLayout>
+      <Profile />
+    </ProtectedLayout>
+  }
+/>
+
       {/* Unknown route */}
       <Route
         path="*"
         element={<Navigate to="/" replace />}
       />
+
+   
     </Routes>
   );
 }

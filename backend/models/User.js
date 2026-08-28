@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    profilePictureSource: {
+      type: String,
+      enum: ['google', 'custom', null],
+      default: null,
+    },
+
     authProvider: {
       type: String,
       enum: ['local', 'google'],
