@@ -1,49 +1,108 @@
-import { createContext, useContext, useState } from 'react';
-import api from '../api/axios';
+import {
+  createContext,
+  useContext,
+  useState,
+} from "react";
+
+import api from "../api/axios";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('userInfo');
-    return stored ? JSON.parse(stored) : null;
+    const stored =
+      localStorage.getItem("userInfo");
+
+    return stored
+      ? JSON.parse(stored)
+      : null;
   });
 
-  const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', {
-      email,
-      password,
-    });
+  const login = async (
+    email,
+    password
+  ) => {
+    const { data } = await api.post(
+      "/auth/login",
+      {
+        email,
+        password,
+      }
+    );
 
-    localStorage.setItem('userInfo', JSON.stringify(data));
+    localStorage.setItem(
+      "userInfo",
+      JSON.stringify(data)
+    );
+
     setUser(data);
 
     return data;
   };
 
-  const googleLogin = async (credential) => {
-    const { data } = await api.post('/auth/google', {
-      credential,
-    });
+  const googleLogin = async (
+    credential
+  ) => {
+    const { data } = await api.post(
+      "/auth/google",
+      {
+        credential,
+      }
+    );
 
-    localStorage.setItem('userInfo', JSON.stringify(data));
+    localStorage.setItem(
+      "userInfo",
+      JSON.stringify(data)
+    );
+
     setUser(data);
 
     return data;
   };
 
-  const register = async (name, email, password) => {
-    const { data } = await api.post('/auth/register', {
-      name,
-      email,
-      password,
-    });
+  const register = async (
+    name,
+    email,
+    password
+  ) => {
+    const { data } = await api.post(
+      "/auth/register",
+      {
+        name,
+        email,
+        password,
+      }
+    );
 
     return data;
   };
+
+  // =====================================================
+  // UPDATE USER
+  // =====================================================
+
+  const updateUser = (updatedData) => {
+    setUser((previousUser) => {
+      const updatedUser = {
+        ...previousUser,
+        ...updatedData,
+      };
+
+      localStorage.setItem(
+        "userInfo",
+        JSON.stringify(updatedUser)
+      );
+
+      return updatedUser;
+    });
+  };
+
+  // =====================================================
+  // LOGOUT
+  // =====================================================
 
   const logout = () => {
-    localStorage.removeItem('userInfo');
+    localStorage.removeItem("userInfo");
     setUser(null);
   };
 
@@ -54,6 +113,7 @@ export function AuthProvider({ children }) {
         login,
         googleLogin,
         register,
+        updateUser,
         logout,
         isAuthenticated: !!user,
       }}
@@ -67,7 +127,9 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
 
   if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error(
+      "useAuth must be used within AuthProvider"
+    );
   }
 
   return ctx;
