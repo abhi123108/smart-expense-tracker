@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // =====================================================
+    // PASSWORD RESET
+    // =====================================================
+
     resetPasswordToken: {
       type: String,
       default: null,
@@ -66,31 +70,67 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // =====================================================
+    // EMAIL CHANGE OTP
+    // =====================================================
+
+    pendingEmail: {
+      type: String,
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+
+    emailChangeOtpHash: {
+      type: String,
+      default: null,
+    },
+
+    emailChangeOtpExpire: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Hash password only when it is created or changed.
+// =====================================================
+// PASSWORD HASH
+// =====================================================
+
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) {
     return next();
   }
 
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  this.password = await bcrypt.hash(
+    this.password,
+    salt
+  );
 
   next();
 });
 
-// Compare entered password with stored hash.
-userSchema.methods.matchPassword = async function (enteredPassword) {
+// =====================================================
+// PASSWORD MATCH
+// =====================================================
+
+userSchema.methods.matchPassword = async function (
+  enteredPassword
+) {
   if (!this.password) {
     return false;
   }
 
-  return bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(
+    enteredPassword,
+    this.password
+  );
 };
 
 module.exports = mongoose.model('User', userSchema);

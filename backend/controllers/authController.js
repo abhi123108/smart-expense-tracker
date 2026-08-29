@@ -4,19 +4,35 @@ const { OAuth2Client } = require('google-auth-library');
 
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
-const { sendPasswordResetEmail } = require('../utils/emailService');
+
+const {
+  sendPasswordResetEmail,
+  sendEmailChangeOtp,
+} = require('../utils/emailService');
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 );
 
 // =====================================================
+// HELPER
+// =====================================================
+
+const getUserResponse = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  currency: user.currency,
+  monthlyIncome: user.monthlyIncome,
+  profilePicture: user.profilePicture,
+  authProvider: user.authProvider,
+  token: generateToken(user._id),
+});
+
+// =====================================================
 // REGISTER USER
 // =====================================================
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const {
     name,
@@ -33,7 +49,9 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = email
+    .toLowerCase()
+    .trim();
 
   const userExists = await User.findOne({
     email: normalizedEmail,
@@ -47,34 +65,24 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
-    name,
+    name: name.trim(),
     email: normalizedEmail,
     password,
-    currency,
-    monthlyIncome,
+    currency: currency || 'INR',
+    monthlyIncome: monthlyIncome || 0,
     authProvider: 'local',
     profilePicture: null,
   });
 
-  res.status(201).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    currency: user.currency,
-    monthlyIncome: user.monthlyIncome,
-    profilePicture: user.profilePicture,
-    authProvider: user.authProvider,
-    token: generateToken(user._id),
-  });
+  res.status(201).json(
+    getUserResponse(user)
+  );
 });
 
 // =====================================================
 // LOGIN USER
 // =====================================================
 
-// @desc    Authenticate user
-// @route   POST /api/auth/login
-// @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -85,7 +93,9 @@ const loginUser = asyncHandler(async (req, res) => {
     );
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = email
+    .toLowerCase()
+    .trim();
 
   const user = await User.findOne({
     email: normalizedEmail,
@@ -96,19 +106,14 @@ const loginUser = asyncHandler(async (req, res) => {
     user.password &&
     (await user.matchPassword(password))
   ) {
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      currency: user.currency,
-      monthlyIncome: user.monthlyIncome,
-      profilePicture: user.profilePicture,
-      authProvider: user.authProvider,
-      token: generateToken(user._id),
-    });
+    res.status(200).json(
+      getUserResponse(user)
+    );
   } else {
     res.status(401);
-    throw new Error('Invalid email or password');
+    throw new Error(
+      'Invalid email or password'
+    );
   }
 });
 
@@ -116,9 +121,6 @@ const loginUser = asyncHandler(async (req, res) => {
 // FORGOT PASSWORD
 // =====================================================
 
-// @desc    Request password reset
-// @route   POST /api/auth/forgot-password
-// @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -129,33 +131,32 @@ const forgotPassword = asyncHandler(async (req, res) => {
     );
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = email
+    .toLowerCase()
+    .trim();
 
   const user = await User.findOne({
     email: normalizedEmail,
   });
 
-  // Always return the same message so attackers
-  // cannot discover whether an email exists.
   const message =
     'If an account exists with this email, a password reset link has been sent.';
 
   if (!user) {
-    return res.status(200).json({ message });
+    return res.status(200).json({
+      message,
+    });
   }
 
-  // Generate cryptographically secure random token.
   const resetToken = crypto
     .randomBytes(32)
     .toString('hex');
 
-  // Store only the SHA-256 hash in MongoDB.
   user.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
 
-  // Token expires after 15 minutes.
   user.resetPasswordExpire =
     Date.now() + 15 * 60 * 1000;
 
@@ -170,9 +171,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
       resetToken,
     });
 
-    return res.status(200).json({ message });
+    return res.status(200).json({
+      message,
+    });
   } catch (error) {
-    // Clean up token if email delivery fails.
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
 
@@ -197,9 +199,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // RESET PASSWORD
 // =====================================================
 
-// @desc    Reset password using token
-// @route   POST /api/auth/reset-password/:token
-// @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -239,11 +238,9 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   user.password = password;
 
-  // Invalidate reset token immediately.
   user.resetPasswordToken = null;
   user.resetPasswordExpire = null;
 
-  // User model hashes the password automatically.
   await user.save();
 
   res.status(200).json({
@@ -256,9 +253,6 @@ const resetPassword = asyncHandler(async (req, res) => {
 // GOOGLE LOGIN
 // =====================================================
 
-// @desc    Authenticate user with Google
-// @route   POST /api/auth/google
-// @access  Public
 const googleLogin = asyncHandler(async (req, res) => {
   const { credential } = req.body;
 
@@ -270,10 +264,6 @@ const googleLogin = asyncHandler(async (req, res) => {
   }
 
   if (!process.env.GOOGLE_CLIENT_ID) {
-    console.error(
-      'GOOGLE_CLIENT_ID is not configured'
-    );
-
     res.status(500);
     throw new Error(
       'Google authentication is not configured'
@@ -317,12 +307,8 @@ const googleLogin = asyncHandler(async (req, res) => {
   const name =
     payload.name || 'Google User';
 
-  // Google profile picture.
   const picture =
     payload.picture || null;
-
-  const emailVerified =
-    payload.email_verified;
 
   if (!googleId || !email) {
     res.status(400);
@@ -331,7 +317,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     );
   }
 
-  if (!emailVerified) {
+  if (!payload.email_verified) {
     res.status(401);
     throw new Error(
       'Google email address is not verified'
@@ -343,64 +329,44 @@ const googleLogin = asyncHandler(async (req, res) => {
   });
 
   if (user) {
-    // Existing account.
-
-    // Link Google account if not already linked.
     if (!user.googleId) {
       user.googleId = googleId;
     }
 
-    // Save/update Google profile picture.
-    if (picture) {
+    if (
+      picture &&
+      user.profilePictureSource !== 'custom'
+    ) {
       user.profilePicture = picture;
-    }
-
-    // Do not convert an existing local account
-    // into a Google-only account.
-    if (!user.authProvider) {
-      user.authProvider = 'local';
+      user.profilePictureSource = 'google';
     }
 
     await user.save({
       validateBeforeSave: false,
     });
   } else {
-    // Create new Google account.
     user = await User.create({
       name,
       email,
       password: null,
       googleId,
       profilePicture: picture,
+      profilePictureSource: 'google',
       authProvider: 'google',
       currency: 'INR',
       monthlyIncome: 0,
     });
   }
 
-  res.status(200).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    currency: user.currency,
-    monthlyIncome: user.monthlyIncome,
-
-    // Profile picture returned to frontend.
-    profilePicture: user.profilePicture,
-
-    authProvider: user.authProvider,
-
-    token: generateToken(user._id),
-  });
+  res.status(200).json(
+    getUserResponse(user)
+  );
 });
 
 // =====================================================
 // GET PROFILE
 // =====================================================
 
-// @desc    Get logged-in user's profile
-// @route   GET /api/auth/profile
-// @access  Private
 const getProfile = asyncHandler(async (req, res) => {
   res.status(200).json({
     _id: req.user._id,
@@ -414,12 +380,9 @@ const getProfile = asyncHandler(async (req, res) => {
 });
 
 // =====================================================
-// UPDATE PROFILE
+// UPDATE BASIC PROFILE
 // =====================================================
 
-// @desc    Update logged-in user's profile
-// @route   PUT /api/auth/profile
-// @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(
     req.user._id
@@ -430,76 +393,408 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  user.name =
-    req.body.name || user.name;
-
-  user.currency =
-    req.body.currency || user.currency;
-
-  user.monthlyIncome =
-    req.body.monthlyIncome ??
-    user.monthlyIncome;
-
-  if (req.body.password) {
-    user.password = req.body.password;
-  }
-
-  // Allow profile picture URL to be updated.
   if (
-    req.body.profilePicture !== undefined
+    req.body.name !== undefined &&
+    req.body.name.trim()
   ) {
-    user.profilePicture =
-      req.body.profilePicture;
+    user.name = req.body.name.trim();
   }
 
-  const updated = await user.save();
+  if (req.body.currency !== undefined) {
+    user.currency = req.body.currency;
+  }
+
+  if (req.body.monthlyIncome !== undefined) {
+    const income = Number(
+      req.body.monthlyIncome
+    );
+
+    if (Number.isNaN(income) || income < 0) {
+      res.status(400);
+      throw new Error(
+        'Monthly income must be a valid positive number'
+      );
+    }
+
+    user.monthlyIncome = income;
+  }
+
+  await user.save();
 
   res.status(200).json({
-    _id: updated._id,
-    name: updated.name,
-    email: updated.email,
-    currency: updated.currency,
-    monthlyIncome: updated.monthlyIncome,
-    profilePicture: updated.profilePicture,
-    authProvider: updated.authProvider,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    currency: user.currency,
+    monthlyIncome: user.monthlyIncome,
+    profilePicture: user.profilePicture,
+    authProvider: user.authProvider,
   });
 });
 
 // =====================================================
-// EXPORTS
+// CHANGE PASSWORD
 // =====================================================
 
+// @route PUT /api/auth/change-password
+// @access Private
 
-// @desc    Upload/update profile picture
-// @route   POST /api/auth/profile/photo
-// @access  Private
-const uploadProfilePhoto = asyncHandler(async (req, res) => {
-  if (!req.file) {
+const changePassword = asyncHandler(async (req, res) => {
+  const {
+    oldPassword,
+    newPassword,
+    confirmPassword,
+  } = req.body;
+
+  if (!oldPassword || !newPassword) {
     res.status(400);
-    throw new Error('Please select an image');
+    throw new Error(
+      'Please provide old and new password'
+    );
   }
 
-  const user = await User.findById(req.user._id);
+  if (newPassword.length < 6) {
+    res.status(400);
+    throw new Error(
+      'New password must be at least 6 characters'
+    );
+  }
+
+  if (
+    confirmPassword !== undefined &&
+    newPassword !== confirmPassword
+  ) {
+    res.status(400);
+    throw new Error(
+      'New password and confirm password do not match'
+    );
+  }
+
+  const user = await User.findById(
+    req.user._id
+  );
 
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
-  // Store the uploaded image URL
-  user.profilePicture = `/uploads/profile/${req.file.filename}`;
+  // Google account without local password
+  if (!user.password) {
+    res.status(400);
+    throw new Error(
+      'Password change is not available because this account uses Google authentication'
+    );
+  }
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+  const isOldPasswordCorrect =
+    await user.matchPassword(oldPassword);
+
+  if (!isOldPasswordCorrect) {
+    res.status(401);
+    throw new Error(
+      'Old password is incorrect'
+    );
+  }
+
+  if (oldPassword === newPassword) {
+    res.status(400);
+    throw new Error(
+      'New password must be different from old password'
+    );
+  }
+
+  user.password = newPassword;
+
+  await user.save();
 
   res.status(200).json({
-    message: 'Profile photo updated successfully',
-    profilePicture: user.profilePicture,
+    message:
+      'Password changed successfully',
   });
 });
 
+// =====================================================
+// REQUEST EMAIL CHANGE OTP
+// =====================================================
 
+// @route POST /api/auth/email-change/request
+// @access Private
+
+const requestEmailChange = asyncHandler(
+  async (req, res) => {
+    const { newEmail } = req.body;
+
+    if (!newEmail) {
+      res.status(400);
+      throw new Error(
+        'Please provide a new email address'
+      );
+    }
+
+    const normalizedEmail = newEmail
+      .toLowerCase()
+      .trim();
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      res.status(400);
+      throw new Error(
+        'Please provide a valid email address'
+      );
+    }
+
+    const user = await User.findById(
+      req.user._id
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error(
+        'User not found'
+      );
+    }
+
+    if (normalizedEmail === user.email) {
+      res.status(400);
+      throw new Error(
+        'New email must be different from your current email'
+      );
+    }
+
+    const emailExists = await User.findOne({
+      email: normalizedEmail,
+      _id: {
+        $ne: user._id,
+      },
+    });
+
+    if (emailExists) {
+      res.status(400);
+      throw new Error(
+        'This email is already registered with another account'
+      );
+    }
+
+    // Generate 6 digit OTP
+    const otp = crypto
+      .randomInt(100000, 1000000)
+      .toString();
+
+    // Store only hash
+    const otpHash = crypto
+      .createHash('sha256')
+      .update(otp)
+      .digest('hex');
+
+    user.pendingEmail =
+      normalizedEmail;
+
+    user.emailChangeOtpHash =
+      otpHash;
+
+    // OTP valid for 10 minutes
+    user.emailChangeOtpExpire =
+      Date.now() + 10 * 60 * 1000;
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    try {
+      await sendEmailChangeOtp({
+        to: normalizedEmail,
+        name: user.name,
+        otp,
+      });
+    } catch (error) {
+      user.pendingEmail = null;
+      user.emailChangeOtpHash = null;
+      user.emailChangeOtpExpire = null;
+
+      await user.save({
+        validateBeforeSave: false,
+      });
+
+      console.error(
+        'Email change OTP failed:',
+        error
+      );
+
+      res.status(500);
+
+      throw new Error(
+        'Unable to send OTP. Please try again later.'
+      );
+    }
+
+    res.status(200).json({
+      message:
+        'OTP sent successfully to your new email address',
+    });
+  }
+);
+
+// =====================================================
+// VERIFY EMAIL CHANGE OTP
+// =====================================================
+
+// @route POST /api/auth/email-change/verify
+// @access Private
+
+const verifyEmailChange = asyncHandler(
+  async (req, res) => {
+    const { otp } = req.body;
+
+    if (!otp) {
+      res.status(400);
+      throw new Error(
+        'Please enter the OTP'
+      );
+    }
+
+    const user = await User.findById(
+      req.user._id
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error(
+        'User not found'
+      );
+    }
+
+    if (
+      !user.pendingEmail ||
+      !user.emailChangeOtpHash ||
+      !user.emailChangeOtpExpire
+    ) {
+      res.status(400);
+      throw new Error(
+        'No email change request found'
+      );
+    }
+
+    if (
+      user.emailChangeOtpExpire <
+      Date.now()
+    ) {
+      user.pendingEmail = null;
+      user.emailChangeOtpHash = null;
+      user.emailChangeOtpExpire = null;
+
+      await user.save({
+        validateBeforeSave: false,
+      });
+
+      res.status(400);
+      throw new Error(
+        'OTP has expired. Please request a new OTP'
+      );
+    }
+
+    const otpHash = crypto
+      .createHash('sha256')
+      .update(String(otp).trim())
+      .digest('hex');
+
+    if (
+      otpHash !==
+      user.emailChangeOtpHash
+    ) {
+      res.status(400);
+      throw new Error(
+        'Invalid OTP'
+      );
+    }
+
+    // Check again before changing email
+    const emailExists = await User.findOne({
+      email: user.pendingEmail,
+      _id: {
+        $ne: user._id,
+      },
+    });
+
+    if (emailExists) {
+      user.pendingEmail = null;
+      user.emailChangeOtpHash = null;
+      user.emailChangeOtpExpire = null;
+
+      await user.save({
+        validateBeforeSave: false,
+      });
+
+      res.status(400);
+      throw new Error(
+        'This email is already registered with another account'
+      );
+    }
+
+    user.email = user.pendingEmail;
+
+    user.pendingEmail = null;
+    user.emailChangeOtpHash = null;
+    user.emailChangeOtpExpire = null;
+
+    await user.save();
+
+    res.status(200).json({
+      message:
+        'Email address changed successfully',
+      email: user.email,
+    });
+  }
+);
+
+// =====================================================
+// UPLOAD PROFILE PHOTO
+// =====================================================
+
+const uploadProfilePhoto = asyncHandler(
+  async (req, res) => {
+    if (!req.file) {
+      res.status(400);
+      throw new Error(
+        'Please select an image'
+      );
+    }
+
+    const user = await User.findById(
+      req.user._id
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error(
+        'User not found'
+      );
+    }
+
+    user.profilePicture =
+      `/uploads/profile/${req.file.filename}`;
+
+    user.profilePictureSource =
+      'custom';
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    res.status(200).json({
+      message:
+        'Profile photo updated successfully',
+      profilePicture:
+        user.profilePicture,
+    });
+  }
+);
+
+// =====================================================
+// EXPORTS
+// =====================================================
 
 module.exports = {
   registerUser,
@@ -509,5 +804,8 @@ module.exports = {
   resetPassword,
   getProfile,
   updateProfile,
+  changePassword,
+  requestEmailChange,
+  verifyEmailChange,
   uploadProfilePhoto,
 };

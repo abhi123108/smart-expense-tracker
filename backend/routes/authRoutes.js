@@ -13,6 +13,9 @@ const {
   resetPassword,
   getProfile,
   updateProfile,
+  changePassword,
+  requestEmailChange,
+  verifyEmailChange,
   uploadProfilePhoto,
 } = require('../controllers/authController');
 
@@ -39,7 +42,9 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname);
+    const extension = path.extname(
+      file.originalname
+    );
 
     const filename =
       `profile-${req.user._id}-${Date.now()}${extension}`;
@@ -76,16 +81,28 @@ const uploadProfile = multer({
 });
 
 // =====================================================
-// AUTH ROUTES
+// AUTH
 // =====================================================
 
-router.post('/register', registerUser);
+router.post(
+  '/register',
+  registerUser
+);
 
-router.post('/login', loginUser);
+router.post(
+  '/login',
+  loginUser
+);
 
-router.post('/google', googleLogin);
+router.post(
+  '/google',
+  googleLogin
+);
 
-// Password reset routes
+// =====================================================
+// PASSWORD RESET
+// =====================================================
+
 router.post(
   '/forgot-password',
   forgotPassword
@@ -96,7 +113,10 @@ router.post(
   resetPassword
 );
 
-// Profile routes
+// =====================================================
+// PROFILE
+// =====================================================
+
 router.get(
   '/profile',
   protect,
@@ -109,11 +129,44 @@ router.put(
   updateProfile
 );
 
-// Profile photo upload
+// =====================================================
+// CHANGE PASSWORD
+// =====================================================
+
+router.put(
+  '/change-password',
+  protect,
+  changePassword
+);
+
+// =====================================================
+// CHANGE EMAIL
+// =====================================================
+
+// Send OTP to new email
+router.post(
+  '/email-change/request',
+  protect,
+  requestEmailChange
+);
+
+// Verify OTP and change email
+router.post(
+  '/email-change/verify',
+  protect,
+  verifyEmailChange
+);
+
+// =====================================================
+// PROFILE PHOTO
+// =====================================================
+
 router.post(
   '/profile/photo',
   protect,
-  uploadProfile.single('profilePicture'),
+  uploadProfile.single(
+    'profilePicture'
+  ),
   uploadProfilePhoto
 );
 
