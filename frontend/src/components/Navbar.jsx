@@ -1,58 +1,31 @@
-import React, { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
-const navItems = [
-  {
-    path: "/",
-    label: "Dashboard",
-    icon: "▦",
-  },
-  {
-    path: "/add",
-    label: "Add Expense",
-    icon: "＋",
-  },
-  {
-    path: "/scan",
-    label: "Scan Receipt",
-    icon: "▣",
-  },
-  {
-    path: "/reports",
-    label: "Reports & AI",
-    icon: "◔",
-  },
-  {
-    path: "/budget",
-    label: "Budgets",
-    icon: "◈",
-  },
-];
+import React, { useEffect, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // =====================================================
-  // DARK MODE
-  // =====================================================
-
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("expenseai-theme") === "dark";
+    return localStorage.getItem('theme') === 'dark';
   });
 
-  useEffect(() => {
-    document.body.classList.toggle("dark-mode", darkMode);
+  // =====================================================
+  // THEME
+  // =====================================================
 
-    localStorage.setItem(
-      "expenseai-theme",
-      darkMode ? "dark" : "light"
-    );
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
   }, [darkMode]);
 
-  const toggleTheme = () => {
-    setDarkMode((previous) => !previous);
+  const handleThemeToggle = () => {
+    setDarkMode((prev) => !prev);
   };
 
   // =====================================================
@@ -61,53 +34,36 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
-
-  // =====================================================
-  // USER INFORMATION
-  // =====================================================
-
-  const userName =
-    user?.name ||
-    user?.fullName ||
-    user?.username ||
-    "User";
-
-  const userEmail =
-    user?.email ||
-    "ExpenseAI User";
-
-  // =====================================================
-  // AVATAR INITIALS
-  // =====================================================
-
-  const initials =
-    userName
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join("")
-      .toUpperCase() || "U";
 
   // =====================================================
   // PROFILE IMAGE
   // =====================================================
 
-  const profileImageUrl = user?.profilePicture || null;
+  const getProfileImage = () => {
+    if (!user?.profilePicture) {
+      return null;
+    }
 
-  // =====================================================
-  // OPEN PROFILE
-  // =====================================================
+    if (
+      user.profilePicture.startsWith('http://') ||
+      user.profilePicture.startsWith('https://')
+    ) {
+      return user.profilePicture;
+    }
 
-  const handleProfileClick = () => {
-    navigate("/profile");
+    return `http://localhost:5000${user.profilePicture}`;
   };
 
+  const profileImage = getProfileImage();
+
   // =====================================================
-  // RENDER
+  // ACTIVE NAV STYLE
   // =====================================================
+
+  const navClass = ({ isActive }) =>
+    `nav-link ${isActive ? 'active' : ''}`;
 
   return (
     <aside className="navbar">
@@ -117,7 +73,6 @@ export default function Navbar() {
       ================================================= */}
 
       <div className="brand-lockup">
-
         <div className="brand-mark">
           ₹
         </div>
@@ -131,11 +86,10 @@ export default function Navbar() {
             SMART FINANCE
           </div>
         </div>
-
       </div>
 
       {/* =================================================
-          NAVIGATION
+          WORKSPACE
       ================================================= */}
 
       <div className="nav-section-label">
@@ -144,23 +98,76 @@ export default function Navbar() {
 
       <nav className="nav-menu">
 
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `nav-link ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="nav-icon">
-              {item.icon}
-            </span>
+        {/* Dashboard */}
+        <NavLink
+          to="/"
+          end
+          className={navClass}
+        >
+          <span className="nav-icon">
+            ▦
+          </span>
 
-            <span>
-              {item.label}
-            </span>
-          </NavLink>
-        ))}
+          <span>
+            Dashboard
+          </span>
+        </NavLink>
+
+        {/* Add Expense */}
+        <NavLink
+          to="/add"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            +
+          </span>
+
+          <span>
+            Add Expense
+          </span>
+        </NavLink>
+
+        {/* Scan Receipt */}
+        <NavLink
+          to="/scan"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            □
+          </span>
+
+          <span>
+            Scan Receipt
+          </span>
+        </NavLink>
+
+        {/* Reports */}
+        <NavLink
+          to="/reports"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            ◉
+          </span>
+
+          <span>
+            Reports &amp; AI
+          </span>
+        </NavLink>
+
+        {/* Budget */}
+        <NavLink
+          to="/budget"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            ◇
+          </span>
+
+          <span>
+            Budgets
+          </span>
+        </NavLink>
 
       </nav>
 
@@ -177,18 +184,23 @@ export default function Navbar() {
         <button
           type="button"
           className="theme-toggle"
-          onClick={toggleTheme}
+          onClick={handleThemeToggle}
+          aria-label={
+            darkMode
+              ? 'Switch to light mode'
+              : 'Switch to dark mode'
+          }
         >
           <span className="theme-toggle-left">
 
             <span className="theme-toggle-icon">
-              {darkMode ? "☀" : "☾"}
+              {darkMode ? '☀' : '☾'}
             </span>
 
             <span>
               {darkMode
-                ? "Light Mode"
-                : "Dark Mode"}
+                ? 'Dark Mode'
+                : 'Light Mode'}
             </span>
 
           </span>
@@ -196,99 +208,77 @@ export default function Navbar() {
           <span className="theme-switch">
             <span className="theme-switch-dot" />
           </span>
-
         </button>
 
         {/* =================================================
-            LOGGED-IN USER / PROFILE
+            SETTINGS
         ================================================= */}
 
-        <div
+        <NavLink
+          to="/settings"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            ⚙
+          </span>
+
+          <span>
+            Settings
+          </span>
+        </NavLink>
+
+        {/* =================================================
+            USER PROFILE
+        ================================================= */}
+
+        <button
+          type="button"
           className="user-mini"
-          onClick={handleProfileClick}
-          role="button"
-          tabIndex={0}
-          title="Open profile"
-          onKeyDown={(event) => {
-            if (
-              event.key === "Enter" ||
-              event.key === " "
-            ) {
-              handleProfileClick();
-            }
-          }}
-          style={{
-            cursor: "pointer",
-          }}
+          onClick={() => navigate('/profile')}
+          aria-label="Open profile"
         >
 
-          {/* PROFILE AVATAR */}
+          {/* Avatar */}
 
-          <div
-            className="avatar"
-            style={{
-              width: "42px",
-              height: "42px",
-              minWidth: "42px",
-              minHeight: "42px",
-              borderRadius: "50%",
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="avatar">
 
-            {profileImageUrl ? (
+            {profileImage ? (
               <img
-                src={profileImageUrl}
-                alt={`${userName} profile`}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: "50%",
-                  display: "block",
-                }}
+                src={profileImage}
+                alt={user?.name || 'Profile'}
                 onError={(event) => {
-                  console.error(
-                    "Profile image failed to load:",
-                    profileImageUrl
-                  );
-
-                  event.currentTarget.style.display = "none";
-
-                  const parent =
-                    event.currentTarget.parentElement;
-
-                  if (parent) {
-                    parent.innerHTML = `<span>${initials}</span>`;
-                  }
+                  event.currentTarget.style.display = 'none';
                 }}
               />
             ) : (
-              <span>
-                {initials}
-              </span>
+              user?.name
+                ? user.name.charAt(0).toUpperCase()
+                : 'U'
             )}
 
           </div>
 
-          {/* USER DETAILS */}
+          {/* User information */}
 
           <div className="user-copy">
 
             <strong>
-              {userName}
+              {user?.name || 'User'}
             </strong>
 
             <span>
-              {userEmail}
+              {user?.email || 'user@email.com'}
             </span>
 
           </div>
 
-        </div>
+          {/* Arrow */}
+
+          <span className="profile-arrow">
+            ›
+          </span>
+
+        </button>
 
         {/* =================================================
             LOGOUT
@@ -299,7 +289,13 @@ export default function Navbar() {
           className="logout-button"
           onClick={handleLogout}
         >
-          ↪ &nbsp; Sign out
+          <span>
+            ↪
+          </span>
+
+          <span>
+            Sign out
+          </span>
         </button>
 
       </div>
