@@ -1,0 +1,1555 @@
+/* =========================================================
+   SETTINGS PAGE
+   ========================================================= */
+
+.settings-page {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 34px 42px 60px;
+
+  background: #f6f8fc;
+  color: #111827;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+
+.settings-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.settings-header-left {
+  min-width: 0;
+}
+
+.settings-eyebrow {
+  margin: 0 0 8px;
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+
+  color: #6257e8;
+}
+
+.settings-title {
+  margin: 0;
+
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+
+  color: #111827;
+}
+
+.settings-subtitle {
+  margin: 8px 0 0;
+
+  font-size: 15px;
+  line-height: 1.6;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   SECURITY BADGE
+   ========================================================= */
+
+.settings-security-badge {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+  min-width: 235px;
+
+  padding: 13px 17px;
+
+  border: 1px solid #dbe4ef;
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.settings-security-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 11px;
+
+  background: #e8f8ef;
+  color: #16a765;
+}
+
+.settings-security-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-security-title {
+  font-size: 13px;
+  font-weight: 800;
+
+  color: #16a765;
+}
+
+.settings-security-subtitle {
+  font-size: 12px;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.settings-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-bottom: 20px;
+  padding: 28px 30px;
+
+  border: 1px solid #e1e7f0;
+  border-radius: 17px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.055);
+
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  padding-bottom: 21px;
+  margin-bottom: 24px;
+
+  border-bottom: 1px solid #e5eaf1;
+}
+
+.settings-card-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #eeecff;
+  color: #6257e8;
+}
+
+.settings-card-heading {
+  min-width: 0;
+}
+
+.settings-card-title {
+  margin: 0;
+
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 800;
+
+  color: #111827;
+}
+
+.settings-card-description {
+  margin: 4px 0 0;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   PROFILE LAYOUT
+   ========================================================= */
+
+.profile-settings-layout {
+  display: grid;
+
+  grid-template-columns:
+    145px minmax(0, 1fr);
+
+  gap: 30px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   PROFILE PHOTO
+   ========================================================= */
+
+.profile-photo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.profile-photo-wrapper {
+  position: relative;
+
+  width: 122px;
+  height: 122px;
+}
+
+.profile-photo {
+  width: 122px;
+  height: 122px;
+
+  display: block;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border: 4px solid #ffffff;
+
+  box-shadow:
+    0 5px 18px rgba(15, 23, 42, 0.16);
+}
+
+.profile-photo-fallback {
+  width: 122px;
+  height: 122px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6257e8,
+      #8177ff
+    );
+
+  color: #ffffff;
+
+  font-size: 36px;
+  font-weight: 800;
+
+  border: 4px solid #ffffff;
+
+  box-shadow:
+    0 5px 18px rgba(15, 23, 42, 0.16);
+}
+
+.profile-camera-button {
+  position: absolute;
+
+  right: -3px;
+  bottom: 2px;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+
+  background: #6257e8;
+  color: #ffffff;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 12px rgba(98, 87, 232, 0.3);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.profile-camera-button:hover {
+  transform: scale(1.06);
+
+  background: #5147d7;
+}
+
+.profile-photo-button {
+  min-width: 118px;
+
+  padding: 9px 15px;
+
+  border: 1px solid #6257e8;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #6257e8;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.profile-photo-button:hover {
+  background: #6257e8;
+  color: #ffffff;
+}
+
+.profile-photo-hint {
+  margin: 0;
+
+  font-size: 11px;
+  text-align: center;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   FORM GRID
+   ========================================================= */
+
+.settings-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  column-gap: 24px;
+  row-gap: 20px;
+}
+
+.settings-field {
+  min-width: 0;
+}
+
+.settings-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.settings-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  color: #172033;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+.settings-input,
+.settings-select {
+  width: 100%;
+  height: 43px;
+
+  box-sizing: border-box;
+
+  padding: 0 13px;
+
+  border: 1px solid #cfd7e3;
+  border-radius: 9px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #172033;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.settings-input:hover,
+.settings-select:hover {
+  border-color: #b9c5d5;
+}
+
+.settings-input:focus,
+.settings-select:focus {
+  border-color: #6257e8;
+
+  box-shadow:
+    0 0 0 3px rgba(98, 87, 232, 0.12);
+}
+
+.settings-input:disabled {
+  background: #f1f3f6;
+  color: #64748b;
+
+  cursor: not-allowed;
+}
+
+.settings-input::placeholder {
+  color: #94a3b8;
+}
+
+.settings-help {
+  margin: 7px 0 0;
+
+  font-size: 11px;
+  line-height: 1.5;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   INPUT WITH ICON
+   ========================================================= */
+
+.settings-input-wrapper {
+  position: relative;
+}
+
+.settings-input-wrapper .settings-input {
+  padding-right: 42px;
+}
+
+.settings-input-icon {
+  position: absolute;
+
+  right: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #64748b;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   INPUT PREFIX
+   ========================================================= */
+
+.settings-input-prefix {
+  display: flex;
+  align-items: stretch;
+
+  width: 100%;
+}
+
+.settings-input-prefix > span {
+  min-width: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #cfd7e3;
+  border-right: 0;
+
+  border-radius: 9px 0 0 9px;
+
+  background: #f8fafc;
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-input-prefix .settings-input {
+  border-radius: 0 9px 9px 0;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+.settings-button {
+  min-width: 112px;
+  height: 42px;
+
+  padding: 0 18px;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.settings-button:hover {
+  transform: translateY(-1px);
+}
+
+.settings-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+.settings-button.secondary {
+  border: 1px solid #d5dce7;
+
+  background: #f8fafc;
+  color: #475569;
+}
+
+.settings-button.secondary:hover {
+  background: #eef2f7;
+}
+
+.settings-button.primary {
+  border: 1px solid #6257e8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6257e8,
+      #7166ed
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 7px 16px rgba(98, 87, 232, 0.2);
+}
+
+.settings-button.primary:hover {
+  box-shadow:
+    0 9px 22px rgba(98, 87, 232, 0.3);
+}
+
+.settings-button.outline {
+  border: 1px solid #aaa3ff;
+
+  background: #ffffff;
+  color: #6257e8;
+}
+
+.settings-button.outline:hover {
+  background: #f3f1ff;
+}
+
+
+/* =========================================================
+   EMAIL SECTION
+   ========================================================= */
+
+.email-row {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+}
+
+.email-current-box {
+  flex: 1;
+
+  min-height: 43px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 13px;
+
+  border: 1px solid #cfd7e3;
+  border-radius: 9px;
+
+  background: #f8fafc;
+
+  font-size: 13px;
+  color: #334155;
+}
+
+.email-status {
+  display: inline-flex;
+  align-items: center;
+
+  margin-left: 10px;
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  background: #e8f8ef;
+  color: #15945a;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   PASSWORD GRID
+   ========================================================= */
+
+.password-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+/* =========================================================
+   PASSWORD REQUIREMENTS
+   ========================================================= */
+
+.password-requirement {
+  margin-top: 7px;
+
+  font-size: 11px;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   SUCCESS / SECURITY MESSAGE
+   ========================================================= */
+
+.settings-success {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 14px 18px;
+
+  border: 1px solid #b8e8ca;
+  border-radius: 11px;
+
+  background: #f0fbf4;
+}
+
+.settings-success-icon {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #d8f6e3;
+  color: #16a765;
+}
+
+.settings-success-title {
+  margin: 0 0 2px;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  color: #15803d;
+}
+
+.settings-success-text {
+  margin: 0;
+
+  font-size: 11px;
+
+  color: #4b6353;
+}
+
+
+/* =========================================================
+   ALERT
+   ========================================================= */
+
+.settings-alert {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px 15px;
+  margin-bottom: 18px;
+
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.settings-alert.success {
+  border-color: #b8e8ca;
+  background: #f0fbf4;
+}
+
+.settings-alert.error {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.settings-alert-content {
+  flex: 1;
+}
+
+.settings-alert-content strong {
+  display: block;
+
+  font-size: 12px;
+
+  color: #111827;
+}
+
+.settings-alert-content span {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 11px;
+
+  color: #64748b;
+}
+
+.settings-alert-close {
+  border: 0;
+  background: transparent;
+
+  color: #64748b;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   OTP MODAL
+   ========================================================= */
+
+.settings-modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.58);
+
+  backdrop-filter: blur(5px);
+}
+
+.settings-modal {
+  width: 100%;
+  max-width: 460px;
+
+  padding: 28px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 17px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 25px 70px rgba(15, 23, 42, 0.22);
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 8px;
+}
+
+.settings-modal-title {
+  margin: 0;
+
+  font-size: 21px;
+  font-weight: 800;
+
+  color: #111827;
+}
+
+.settings-modal-description {
+  margin: 8px 0 22px;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  color: #64748b;
+}
+
+.settings-modal-icon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: #eeecff;
+  color: #6257e8;
+}
+
+.settings-modal-close {
+  width: 34px;
+  height: 34px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #64748b;
+
+  font-size: 20px;
+
+  cursor: pointer;
+}
+
+.settings-modal-close:hover {
+  background: #f1f3f7;
+  color: #111827;
+}
+
+
+/* =========================================================
+   OTP INPUT
+   ========================================================= */
+
+.otp-input {
+  width: 100%;
+  height: 52px;
+
+  box-sizing: border-box;
+
+  text-align: center;
+
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 8px;
+
+  border: 1px solid #cfd7e3;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #111827;
+}
+
+.otp-input::placeholder {
+  color: #94a3b8;
+}
+
+.otp-input:focus {
+  border-color: #6257e8;
+
+  box-shadow:
+    0 0 0 3px rgba(98, 87, 232, 0.12);
+}
+
+.otp-hint {
+  margin: 9px 0 0;
+
+  text-align: center;
+
+  font-size: 11px;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   DARK THEME
+   IMPORTANT:
+   PROJECT USES body.dark-mode
+   ========================================================= */
+
+body.dark-mode .settings-page {
+  background:
+    radial-gradient(
+      circle at 75% 0%,
+      rgba(91, 81, 220, 0.10),
+      transparent 35%
+    ),
+    #080e1e;
+
+  color: #f8fafc;
+}
+
+
+/* =========================================================
+   DARK HEADER
+   ========================================================= */
+
+body.dark-mode .settings-eyebrow {
+  color: #8178ff;
+}
+
+body.dark-mode .settings-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .settings-subtitle {
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   DARK SECURITY BADGE
+   ========================================================= */
+
+body.dark-mode .settings-security-badge {
+  border-color: #293955;
+
+  background: #101c32;
+
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .settings-security-icon {
+  background: #103529;
+  color: #34d399;
+}
+
+body.dark-mode .settings-security-title {
+  color: #34d399;
+}
+
+body.dark-mode .settings-security-subtitle {
+  color: #8493aa;
+}
+
+
+/* =========================================================
+   DARK CARDS
+   ========================================================= */
+
+body.dark-mode .settings-card {
+  border-color: #293955;
+
+  background:
+    linear-gradient(
+      145deg,
+      #111d33 0%,
+      #0f1a2f 100%
+    );
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .settings-card-header {
+  border-bottom-color: #293a56;
+}
+
+body.dark-mode .settings-card-icon {
+  background: #242451;
+  color: #9b94ff;
+}
+
+body.dark-mode .settings-card-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .settings-card-description {
+  color: #91a2bb;
+}
+
+
+/* =========================================================
+   DARK PROFILE PHOTO
+   ========================================================= */
+
+body.dark-mode .profile-photo {
+  border-color: #17253d;
+
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .profile-photo-fallback {
+  border-color: #17253d;
+}
+
+body.dark-mode .profile-camera-button {
+  border-color: #111c31;
+  background: #635bff;
+}
+
+body.dark-mode .profile-camera-button:hover {
+  background: #756df0;
+}
+
+body.dark-mode .profile-photo-button {
+  border-color: #7770ff;
+
+  background: transparent;
+  color: #9b94ff;
+}
+
+body.dark-mode .profile-photo-button:hover {
+  background: #6257e8;
+  color: #ffffff;
+}
+
+body.dark-mode .profile-photo-hint {
+  color: #71819a;
+}
+
+
+/* =========================================================
+   DARK LABELS
+   ========================================================= */
+
+body.dark-mode .settings-label {
+  color: #e7edf7;
+}
+
+
+/* =========================================================
+   DARK INPUTS
+   ========================================================= */
+
+body.dark-mode .settings-input,
+body.dark-mode .settings-select {
+  border-color: #334966 !important;
+
+  background: #0d1729 !important;
+  color: #f1f5f9 !important;
+}
+
+body.dark-mode .settings-input:hover,
+body.dark-mode .settings-select:hover {
+  border-color: #465d7e !important;
+}
+
+body.dark-mode .settings-input:focus,
+body.dark-mode .settings-select:focus {
+  border-color: #7168ed !important;
+
+  background: #101c32 !important;
+
+  box-shadow:
+    0 0 0 3px rgba(113, 104, 237, 0.15) !important;
+}
+
+body.dark-mode .settings-input::placeholder {
+  color: #64748b !important;
+}
+
+
+/* =========================================================
+   DARK DISABLED EMAIL
+   ========================================================= */
+
+body.dark-mode .settings-input:disabled {
+  border-color: #293a56 !important;
+
+  background: #101a2c !important;
+
+  color: #94a3b8 !important;
+
+  opacity: 1 !important;
+
+  -webkit-text-fill-color: #94a3b8 !important;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   DARK HELP TEXT
+   ========================================================= */
+
+body.dark-mode .settings-help {
+  color: #71819a;
+}
+
+body.dark-mode .password-requirement {
+  color: #71819a;
+}
+
+
+/* =========================================================
+   DARK INPUT PREFIX
+   ========================================================= */
+
+body.dark-mode .settings-input-prefix > span {
+  border-color: #334966;
+
+  background: #16243b;
+  color: #94a3b8;
+}
+
+body.dark-mode .settings-input-prefix .settings-input {
+  border-left-color: #334966 !important;
+}
+
+
+/* =========================================================
+   DARK BUTTONS
+   ========================================================= */
+
+body.dark-mode .settings-button.secondary {
+  border-color: #334966;
+
+  background: #16243b;
+  color: #c1ccdc;
+}
+
+body.dark-mode .settings-button.secondary:hover {
+  background: #1c2b45;
+}
+
+body.dark-mode .settings-button.primary {
+  border-color: #7168ed;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6257e8,
+      #7166ed
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 8px 20px rgba(98, 87, 232, 0.30);
+}
+
+body.dark-mode .settings-button.primary:hover {
+  box-shadow:
+    0 10px 25px rgba(98, 87, 232, 0.40);
+}
+
+body.dark-mode .settings-button.outline {
+  border-color: #7168ed;
+
+  background: transparent;
+  color: #9b94ff;
+}
+
+body.dark-mode .settings-button.outline:hover {
+  background: rgba(98, 87, 232, 0.14);
+
+  color: #b4afff;
+}
+
+
+/* =========================================================
+   DARK EMAIL SECTION
+   ========================================================= */
+
+body.dark-mode .email-current-box {
+  border-color: #334966;
+
+  background: #101c32;
+  color: #dbe5f2;
+}
+
+body.dark-mode .email-status {
+  background: #0e3028;
+  color: #34d399;
+}
+
+
+/* =========================================================
+   DARK SUCCESS BOX
+   ========================================================= */
+
+body.dark-mode .settings-success {
+  border-color: #1f5b36;
+
+  background: #0d2417;
+}
+
+body.dark-mode .settings-success-icon {
+  background: #16452a;
+  color: #34d399;
+}
+
+body.dark-mode .settings-success-title {
+  color: #86efac;
+}
+
+body.dark-mode .settings-success-text {
+  color: #9ab7a5;
+}
+
+
+/* =========================================================
+   DARK ALERT
+   ========================================================= */
+
+body.dark-mode .settings-alert {
+  border-color: #293955;
+
+  background: #111c31;
+  color: #e5e7eb;
+}
+
+body.dark-mode .settings-alert.success {
+  border-color: #1f5b36;
+
+  background: #0d2417;
+}
+
+body.dark-mode .settings-alert.error {
+  border-color: #542535;
+
+  background: #301722;
+}
+
+body.dark-mode .settings-alert-content strong {
+  color: #f8fafc;
+}
+
+body.dark-mode .settings-alert-content span {
+  color: #94a3b8;
+}
+
+body.dark-mode .settings-alert-close {
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   DARK MODAL
+   ========================================================= */
+
+body.dark-mode .settings-modal-overlay {
+  background: rgba(2, 6, 23, 0.76);
+}
+
+body.dark-mode .settings-modal {
+  border-color: #293a56;
+
+  background: #101c32;
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.55);
+}
+
+body.dark-mode .settings-modal-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .settings-modal-description {
+  color: #91a2bb;
+}
+
+body.dark-mode .settings-modal-icon {
+  background: #242451;
+  color: #9b94ff;
+}
+
+body.dark-mode .settings-modal-close {
+  color: #94a3b8;
+}
+
+body.dark-mode .settings-modal-close:hover {
+  background: #1c2b45;
+  color: #f8fafc;
+}
+
+
+/* =========================================================
+   DARK OTP
+   ========================================================= */
+
+body.dark-mode .otp-input {
+  border-color: #334966 !important;
+
+  background: #0d1729 !important;
+  color: #f8fafc !important;
+}
+
+body.dark-mode .otp-input::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .otp-input:focus {
+  border-color: #7168ed !important;
+
+  box-shadow:
+    0 0 0 3px rgba(113, 104, 237, 0.15) !important;
+}
+
+body.dark-mode .otp-hint {
+  color: #71819a;
+}
+
+
+/* =========================================================
+   DARK SELECT
+   ========================================================= */
+
+body.dark-mode .settings-select {
+  color-scheme: dark;
+}
+
+body.dark-mode .settings-select option {
+  background: #0d1729;
+  color: #f1f5f9;
+}
+
+
+/* =========================================================
+   DARK SCROLLBAR
+   ========================================================= */
+
+body.dark-mode .settings-page::-webkit-scrollbar {
+  width: 8px;
+}
+
+body.dark-mode .settings-page::-webkit-scrollbar-track {
+  background: #080e1e;
+}
+
+body.dark-mode .settings-page::-webkit-scrollbar-thumb {
+  background: #293955;
+
+  border-radius: 10px;
+}
+
+body.dark-mode .settings-page::-webkit-scrollbar-thumb:hover {
+  background: #3b4d6a;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1050px) {
+
+  .settings-page {
+    padding: 28px 25px 50px;
+  }
+
+  .settings-header {
+    flex-direction: column;
+  }
+
+  .settings-security-badge {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .profile-settings-layout {
+    grid-template-columns:
+      120px minmax(0, 1fr);
+
+    gap: 24px;
+  }
+
+  .profile-photo-wrapper,
+  .profile-photo,
+  .profile-photo-fallback {
+    width: 105px;
+    height: 105px;
+  }
+
+  .password-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 760px) {
+
+  .settings-page {
+    padding: 24px 16px 40px;
+  }
+
+  .settings-title {
+    font-size: 30px;
+  }
+
+  .settings-card {
+    padding: 22px 18px;
+  }
+
+  .profile-settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-photo-section {
+    align-items: flex-start;
+  }
+
+  .settings-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-field.full-width {
+    grid-column: auto;
+  }
+
+  .email-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .settings-button {
+    width: 100%;
+  }
+}
+
+
+@media (max-width: 480px) {
+
+  .settings-page {
+    padding: 20px 12px 35px;
+  }
+
+  .settings-title {
+    font-size: 27px;
+  }
+
+  .settings-subtitle {
+    font-size: 13px;
+  }
+
+  .settings-card {
+    padding: 18px 15px;
+
+    border-radius: 14px;
+  }
+
+  .settings-card-header {
+    gap: 11px;
+
+    padding-bottom: 17px;
+    margin-bottom: 19px;
+  }
+
+  .settings-card-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .settings-card-title {
+    font-size: 16px;
+  }
+
+  .settings-card-description {
+    font-size: 12px;
+  }
+
+  .profile-photo-wrapper,
+  .profile-photo,
+  .profile-photo-fallback {
+    width: 105px;
+    height: 105px;
+  }
+
+  .settings-input,
+  .settings-select {
+    height: 42px;
+  }
+
+  .settings-modal {
+    padding: 21px 18px;
+  }
+
+  .otp-input {
+    height: 48px;
+
+    font-size: 20px;
+    letter-spacing: 6px;
+  }
+}
