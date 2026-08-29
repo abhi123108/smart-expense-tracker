@@ -4,6 +4,8 @@ const { OAuth2Client } = require('google-auth-library');
 
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const Expense = require('../models/Expense');
+const Budget = require('../models/Budget');
 
 const {
   sendPasswordResetEmail,
@@ -793,6 +795,65 @@ const uploadProfilePhoto = asyncHandler(
 );
 
 // =====================================================
+// DELETE ACCOUNT
+// =====================================================
+
+// @desc    Delete logged-in user's account and all related data
+// @route   DELETE /api/auth/account
+// @access  Private
+const deleteAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    res.status(400);
+    throw new Error('Please provide your password');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Google-only accounts don't have a password.
+  if (!user.password) {
+    res.status(400);
+    throw new Error(
+      'This account does not have a password. Please contact support to delete your account.'
+    );
+  }
+
+  // Verify password before deleting anything.
+  const passwordCorrect = await user.matchPassword(password);
+
+  if (!passwordCorrect) {
+    res.status(401);
+    throw new Error('Incorrect password');
+  }
+
+  // Delete all user expenses.
+  await Expense.deleteMany({
+    user: user._id,
+  });
+
+  // Delete all user budgets.
+  await Budget.deleteMany({
+    user: user._id,
+  });
+
+  // Delete the user account.
+  await User.deleteOne({
+    _id: user._id,
+  });
+
+  res.status(200).json({
+    message:
+      'Account and all associated data deleted successfully.',
+  });
+});
+
+// =====================================================
 // EXPORTS
 // =====================================================
 
@@ -808,4 +869,5 @@ module.exports = {
   requestEmailChange,
   verifyEmailChange,
   uploadProfilePhoto,
+  deleteAccount,
 };
