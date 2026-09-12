@@ -4,25 +4,9 @@ import api from "../api/axios";
 import { uploadProfilePhoto } from "../api/profileApi";
 import "./Settings.css";
 
-/*
-|--------------------------------------------------------------------------
-| Settings Page
-|--------------------------------------------------------------------------
-| Existing project API:
-|
-| GET  /auth/profile
-| PUT  /auth/profile
-| POST /profile/photo
-|
-| Password + Email OTP endpoints are kept separate because they require
-| secure backend verification.
-|--------------------------------------------------------------------------
-*/
-
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
   "http://localhost:5000";
-
 
 // ============================================================
 // ICON COMPONENT
@@ -152,7 +136,6 @@ function Icon({ type, size = 20, strokeWidth = 2 }) {
   }
 }
 
-
 // ============================================================
 // HELPERS
 // ============================================================
@@ -200,7 +183,6 @@ function getErrorMessage(error, fallback) {
     fallback
   );
 }
-
 
 // ============================================================
 // PASSWORD FIELD
@@ -253,7 +235,6 @@ function PasswordField({
   );
 }
 
-
 // ============================================================
 // MAIN SETTINGS COMPONENT
 // ============================================================
@@ -274,37 +255,21 @@ export default function Settings() {
     monthlyIncome: 0,
   });
 
-  const [profileImage, setProfileImage] =
-    useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
-  const [selectedFile, setSelectedFile] =
-    useState(null);
-
-  const [previewUrl, setPreviewUrl] =
-    useState(null);
-
-  const [loadingProfile, setLoadingProfile] =
-    useState(true);
-
-  const [savingProfile, setSavingProfile] =
-    useState(false);
-
-  const [uploadingPhoto, setUploadingPhoto] =
-    useState(false);
-
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // ----------------------------------------------------------
   // PASSWORD
   // ----------------------------------------------------------
 
-  const [currentPassword, setCurrentPassword] =
-    useState("");
-
-  const [newPassword, setNewPassword] =
-    useState("");
-
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showCurrentPassword, setShowCurrentPassword] =
     useState(false);
@@ -318,7 +283,6 @@ export default function Settings() {
   const [changingPassword, setChangingPassword] =
     useState(false);
 
-
   // ----------------------------------------------------------
   // EMAIL
   // ----------------------------------------------------------
@@ -326,21 +290,28 @@ export default function Settings() {
   const [showEmailModal, setShowEmailModal] =
     useState(false);
 
-  const [newEmail, setNewEmail] =
-    useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [emailStep, setEmailStep] = useState("email");
 
-  const [otp, setOtp] =
-    useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
-  const [emailStep, setEmailStep] =
-    useState("email");
+  // ----------------------------------------------------------
+  // DELETE ACCOUNT
+  // ----------------------------------------------------------
 
-  const [sendingOtp, setSendingOtp] =
+  const [showDeleteModal, setShowDeleteModal] =
     useState(false);
 
-  const [verifyingOtp, setVerifyingOtp] =
+  const [deletePassword, setDeletePassword] =
+    useState("");
+
+  const [showDeletePassword, setShowDeletePassword] =
     useState(false);
 
+  const [deletingAccount, setDeletingAccount] =
+    useState(false);
 
   // ----------------------------------------------------------
   // MESSAGES
@@ -351,7 +322,6 @@ export default function Settings() {
 
   const [errorMessage, setErrorMessage] =
     useState("");
-
 
   // ==========================================================
   // LOAD PROFILE
@@ -420,7 +390,6 @@ export default function Settings() {
     };
   }, [user]);
 
-
   // ==========================================================
   // CLEAR MESSAGES
   // ==========================================================
@@ -429,7 +398,6 @@ export default function Settings() {
     setSuccessMessage("");
     setErrorMessage("");
   };
-
 
   // ==========================================================
   // PROFILE INPUT
@@ -443,7 +411,6 @@ export default function Settings() {
       [field]: value,
     }));
   };
-
 
   // ==========================================================
   // SAVE PROFILE
@@ -532,7 +499,6 @@ export default function Settings() {
     }
   };
 
-
   // ==========================================================
   // RESET PROFILE FORM
   // ==========================================================
@@ -552,7 +518,6 @@ export default function Settings() {
     setSelectedFile(null);
   };
 
-
   // ==========================================================
   // SELECT PROFILE PHOTO
   // ==========================================================
@@ -561,7 +526,6 @@ export default function Settings() {
     clearMessages();
     fileInputRef.current?.click();
   };
-
 
   // ==========================================================
   // PHOTO SELECT
@@ -607,7 +571,6 @@ export default function Settings() {
 
     setPreviewUrl(objectUrl);
   };
-
 
   // ==========================================================
   // UPLOAD PHOTO
@@ -684,7 +647,6 @@ export default function Settings() {
     }
   };
 
-
   // ==========================================================
   // PASSWORD CHANGE
   // ==========================================================
@@ -734,29 +696,14 @@ export default function Settings() {
     try {
       setChangingPassword(true);
 
-      /*
-       * SECURITY:
-       * This must be a protected backend endpoint.
-       *
-       * Expected backend contract:
-       *
-       * POST /auth/change-password
-       *
-       * {
-       *   currentPassword,
-       *   newPassword
-       * }
-       *
-       * The backend must verify currentPassword with bcrypt
-       * before changing the password.
-       */
-
+      // Backend route is PUT /auth/change-password
       const { data } =
-        await api.post(
+        await api.put(
           "/auth/change-password",
           {
-            currentPassword,
+            oldPassword: currentPassword,
             newPassword,
+            confirmPassword,
           }
         );
 
@@ -785,7 +732,6 @@ export default function Settings() {
     }
   };
 
-
   // ==========================================================
   // OPEN EMAIL MODAL
   // ==========================================================
@@ -799,7 +745,6 @@ export default function Settings() {
 
     setShowEmailModal(true);
   };
-
 
   // ==========================================================
   // CLOSE EMAIL MODAL
@@ -818,7 +763,6 @@ export default function Settings() {
     setOtp("");
     setEmailStep("email");
   };
-
 
   // ==========================================================
   // SEND EMAIL OTP
@@ -865,20 +809,6 @@ export default function Settings() {
     try {
       setSendingOtp(true);
 
-      /*
-       * Expected backend contract:
-       *
-       * POST /auth/email-change/request
-       *
-       * {
-       *   newEmail
-       * }
-       *
-       * Backend should generate a secure OTP,
-       * hash/store it with expiry, and send it
-       * to the NEW email address.
-       */
-
       const { data } =
         await api.post(
           "/auth/email-change/request",
@@ -911,7 +841,6 @@ export default function Settings() {
     }
   };
 
-
   // ==========================================================
   // VERIFY EMAIL OTP
   // ==========================================================
@@ -936,26 +865,10 @@ export default function Settings() {
     try {
       setVerifyingOtp(true);
 
-      /*
-       * Expected backend contract:
-       *
-       * POST /auth/email-change/verify
-       *
-       * {
-       *   newEmail,
-       *   otp
-       * }
-       *
-       * Backend must verify OTP + expiry and only
-       * then update req.user.email.
-       */
-
       const { data } =
         await api.post(
           "/auth/email-change/verify",
           {
-            newEmail:
-              newEmail.trim().toLowerCase(),
             otp: cleanOtp,
           }
         );
@@ -1008,6 +921,66 @@ export default function Settings() {
     }
   };
 
+  // ==========================================================
+  // DELETE ACCOUNT
+  // ==========================================================
+
+  const handleDeleteAccount = async (event) => {
+    event.preventDefault();
+
+    clearMessages();
+
+    if (!deletePassword) {
+      setErrorMessage(
+        "Please enter your password."
+      );
+      return;
+    }
+
+    try {
+      setDeletingAccount(true);
+
+      const { data } =
+        await api.delete(
+          "/auth/account",
+          {
+            data: {
+              password:
+                deletePassword,
+            },
+          }
+        );
+
+      // Remove stored authentication data
+      localStorage.removeItem("userInfo");
+
+      // Close modal and clear password
+      setShowDeleteModal(false);
+      setDeletePassword("");
+
+      setSuccessMessage(
+        data?.message ||
+          "Account and all associated data deleted successfully."
+      );
+
+      // Redirect to login
+      window.location.href = "/login";
+    } catch (error) {
+      console.error(
+        "Account deletion failed:",
+        error
+      );
+
+      setErrorMessage(
+        getErrorMessage(
+          error,
+          "Unable to delete your account. Please check your password and try again."
+        )
+      );
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   // ==========================================================
   // PROFILE DISPLAY
@@ -1027,7 +1000,6 @@ export default function Settings() {
 
   const isGoogleAccount =
     user?.authProvider === "google";
-
 
   // ==========================================================
   // RENDER
@@ -1060,7 +1032,6 @@ export default function Settings() {
 
           </div>
 
-
           <div className="settings-security-badge">
 
             <div className="settings-security-icon">
@@ -1086,7 +1057,6 @@ export default function Settings() {
 
         </header>
 
-
         {/* ================================================== */}
         {/* GLOBAL MESSAGE */}
         {/* ================================================== */}
@@ -1102,7 +1072,6 @@ export default function Settings() {
           >
 
             <div className="settings-alert-icon">
-
               <Icon
                 type={
                   successMessage
@@ -1111,7 +1080,6 @@ export default function Settings() {
                 }
                 size={18}
               />
-
             </div>
 
             <div className="settings-alert-content">
@@ -1143,7 +1111,6 @@ export default function Settings() {
           </div>
         )}
 
-
         {/* ================================================== */}
         {/* PROFILE INFORMATION */}
         {/* ================================================== */}
@@ -1174,16 +1141,13 @@ export default function Settings() {
 
           </div>
 
-
           <form
             onSubmit={handleSaveProfile}
           >
 
             <div className="profile-settings-layout">
 
-              {/* ============================================ */}
               {/* PHOTO */}
-              {/* ============================================ */}
 
               <div className="profile-photo-section">
 
@@ -1221,7 +1185,6 @@ export default function Settings() {
 
                 </div>
 
-
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1233,7 +1196,6 @@ export default function Settings() {
                     display: "none",
                   }}
                 />
-
 
                 <button
                   type="button"
@@ -1254,17 +1216,13 @@ export default function Settings() {
                     : "Change photo"}
                 </button>
 
-
                 <p className="profile-photo-hint">
                   JPG, PNG up to 5MB
                 </p>
 
               </div>
 
-
-              {/* ============================================ */}
               {/* FORM */}
-              {/* ============================================ */}
 
               <div className="settings-form-grid">
 
@@ -1301,7 +1259,6 @@ export default function Settings() {
 
                 </div>
 
-
                 {/* CURRENT EMAIL */}
 
                 <div className="settings-field">
@@ -1326,7 +1283,6 @@ export default function Settings() {
                   </p>
 
                 </div>
-
 
                 {/* CURRENCY */}
 
@@ -1376,7 +1332,6 @@ export default function Settings() {
                   </select>
 
                 </div>
-
 
                 {/* INCOME */}
 
@@ -1434,10 +1389,7 @@ export default function Settings() {
 
             </div>
 
-
-            {/* ============================================== */}
             {/* PROFILE ACTIONS */}
-            {/* ============================================== */}
 
             <div className="settings-actions">
 
@@ -1461,7 +1413,6 @@ export default function Settings() {
                 </span>
               </button>
 
-
               <button
                 type="submit"
                 className="settings-button primary"
@@ -1470,11 +1421,9 @@ export default function Settings() {
                   loadingProfile
                 }
               >
-                {savingProfile ? (
-                  "Saving..."
-                ) : (
-                  "Save changes"
-                )}
+                {savingProfile
+                  ? "Saving..."
+                  : "Save changes"}
               </button>
 
             </div>
@@ -1482,7 +1431,6 @@ export default function Settings() {
           </form>
 
         </section>
-
 
         {/* ================================================== */}
         {/* EMAIL ADDRESS */}
@@ -1514,7 +1462,6 @@ export default function Settings() {
 
           </div>
 
-
           <div className="email-row">
 
             <div className="email-current-box">
@@ -1535,7 +1482,6 @@ export default function Settings() {
 
             </div>
 
-
             <button
               type="button"
               className="settings-button outline"
@@ -1549,7 +1495,6 @@ export default function Settings() {
           </div>
 
         </section>
-
 
         {/* ================================================== */}
         {/* CHANGE PASSWORD */}
@@ -1581,7 +1526,6 @@ export default function Settings() {
 
           </div>
 
-
           {isGoogleAccount ? (
 
             <div className="settings-info-box">
@@ -1594,6 +1538,7 @@ export default function Settings() {
               </div>
 
               <div>
+
                 <strong>
                   Google account
                 </strong>
@@ -1603,6 +1548,7 @@ export default function Settings() {
                   authentication. Password changes
                   are managed through Google.
                 </p>
+
               </div>
 
             </div>
@@ -1639,7 +1585,6 @@ export default function Settings() {
                   }
                 />
 
-
                 <PasswordField
                   label="New password"
                   value={
@@ -1661,7 +1606,6 @@ export default function Settings() {
                     changingPassword
                   }
                 />
-
 
                 <PasswordField
                   label="Confirm new password"
@@ -1686,7 +1630,6 @@ export default function Settings() {
                 />
 
               </div>
-
 
               <div className="password-bottom">
 
@@ -1714,6 +1657,76 @@ export default function Settings() {
 
         </section>
 
+        {/* ================================================== */}
+        {/* DELETE ACCOUNT */}
+        {/* ================================================== */}
+
+        <section className="settings-card danger-card">
+
+          <div className="settings-card-header">
+
+            <div className="settings-card-icon danger-icon">
+              <Icon
+                type="x"
+                size={23}
+              />
+            </div>
+
+            <div className="settings-card-heading">
+
+              <h2 className="settings-card-title">
+                Delete account
+              </h2>
+
+              <p className="settings-card-description">
+                Permanently delete your account and
+                all associated expenses and budgets.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="delete-account-content">
+
+            <div className="delete-account-warning">
+
+              <Icon
+                type="info"
+                size={18}
+              />
+
+              <div>
+
+                <strong>
+                  This action cannot be undone.
+                </strong>
+
+                <p>
+                  Your profile, expenses and budgets
+                  will be permanently deleted.
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              className="settings-button danger-button"
+              onClick={() => {
+                clearMessages();
+                setDeletePassword("");
+                setShowDeletePassword(false);
+                setShowDeleteModal(true);
+              }}
+            >
+              Delete account
+            </button>
+
+          </div>
+
+        </section>
 
         {/* ================================================== */}
         {/* SECURITY FOOTER */}
@@ -1745,7 +1758,6 @@ export default function Settings() {
 
       </div>
 
-
       {/* ==================================================== */}
       {/* EMAIL CHANGE MODAL */}
       {/* ==================================================== */}
@@ -1765,10 +1777,6 @@ export default function Settings() {
         >
 
           <div className="settings-modal">
-
-            {/* ============================================== */}
-            {/* MODAL HEADER */}
-            {/* ============================================== */}
 
             <div className="settings-modal-header">
 
@@ -1802,7 +1810,6 @@ export default function Settings() {
 
             </div>
 
-
             {emailStep === "email" ? (
 
               <>
@@ -1815,7 +1822,6 @@ export default function Settings() {
                   We'll send a 6-digit verification
                   code to it.
                 </p>
-
 
                 <form
                   onSubmit={
@@ -1850,7 +1856,6 @@ export default function Settings() {
                     />
 
                   </div>
-
 
                   <div className="settings-modal-actions">
 
@@ -1900,7 +1905,6 @@ export default function Settings() {
                   .
                 </p>
 
-
                 <form
                   onSubmit={
                     handleVerifyEmailOtp
@@ -1939,7 +1943,6 @@ export default function Settings() {
 
                   </div>
 
-
                   <div className="otp-hint">
 
                     <Icon
@@ -1953,7 +1956,6 @@ export default function Settings() {
                     </span>
 
                   </div>
-
 
                   <div className="settings-modal-actions">
 
@@ -1990,6 +1992,129 @@ export default function Settings() {
               </>
 
             )}
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* ==================================================== */}
+      {/* DELETE ACCOUNT MODAL */}
+      {/* ==================================================== */}
+
+      {showDeleteModal && (
+
+        <div
+          className="settings-modal-overlay"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+              event.currentTarget &&
+              !deletingAccount
+            ) {
+              setShowDeleteModal(false);
+            }
+          }}
+        >
+
+          <div className="settings-modal delete-modal">
+
+            <div className="settings-modal-header">
+
+              <div className="settings-modal-icon danger-modal-icon">
+                <Icon
+                  type="info"
+                  size={23}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="settings-modal-close"
+                onClick={() =>
+                  setShowDeleteModal(false)
+                }
+                disabled={
+                  deletingAccount
+                }
+              >
+                <Icon
+                  type="x"
+                  size={19}
+                />
+              </button>
+
+            </div>
+
+            <h3 className="settings-modal-title">
+              Delete your account?
+            </h3>
+
+            <p className="settings-modal-description">
+              This will permanently delete your
+              account, expenses and budgets.
+              <strong>
+                {" "}
+                This action cannot be undone.
+              </strong>
+            </p>
+
+            <form
+              onSubmit={
+                handleDeleteAccount
+              }
+            >
+
+              <PasswordField
+                label="Enter your password to confirm"
+                value={deletePassword}
+                onChange={setDeletePassword}
+                placeholder="Enter your password"
+                visible={
+                  showDeletePassword
+                }
+                onToggle={() =>
+                  setShowDeletePassword(
+                    (value) => !value
+                  )
+                }
+                disabled={
+                  deletingAccount
+                }
+              />
+
+              <div className="settings-modal-actions">
+
+                <button
+                  type="button"
+                  className="settings-button secondary"
+                  onClick={() =>
+                    setShowDeleteModal(false)
+                  }
+                  disabled={
+                    deletingAccount
+                  }
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="settings-button danger-button"
+                  disabled={
+                    deletingAccount ||
+                    !deletePassword
+                  }
+                >
+                  {deletingAccount
+                    ? "Deleting..."
+                    : "Delete permanently"}
+                </button>
+
+              </div>
+
+            </form>
 
           </div>
 
