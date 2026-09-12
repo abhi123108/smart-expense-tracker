@@ -1,39 +1,44 @@
-const nodemailer = require('nodemailer');
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 // =====================================================
-// SMTP TRANSPORTER
+// CONFIG
 // =====================================================
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+function getBrevoConfig() {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.MAIL_FROM;
+  const fromName = process.env.MAIL_FROM_NAME || 'ExpenseAI';
 
-  port: Number(process.env.SMTP_PORT) || 587,
+  if (!apiKey) {
+    throw new Error('BREVO_API_KEY is not configured');
+  }
 
-  secure:
-    process.env.SMTP_SECURE === 'true',
+  if (!fromEmail) {
+    throw new Error('MAIL_FROM is not configured');
+  }
 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-
-// =====================================================
-// FROM EMAIL
-// =====================================================
-
-function getFromEmail() {
-  return (
-    process.env.MAIL_FROM ||
-    process.env.SMTP_USER ||
-    'ExpenseAI <no-reply@example.com>'
-  );
+  return {
+    apiKey,
+    fromEmail,
+    fromName,
+  };
 }
 
+// =====================================================
+// HTML ESCAPE
+// =====================================================
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // =====================================================
-// SEND GENERIC EMAIL
+// SEND EMAIL THROUGH BREVO
 // =====================================================
 
 async function sendEmail({
@@ -42,47 +47,71 @@ async function sendEmail({
   text,
   html,
 }) {
-  if (
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASS
-  ) {
-    console.error(
-      'SMTP credentials are not configured.'
-    );
+  const {
+    apiKey,
+    fromEmail,
+    fromName,
+  } = getBrevoConfig();
 
-    throw new Error(
-      'Email service is not configured'
-    );
+  if (!to) {
+    throw new Error('Recipient email is required');
   }
 
   try {
-    const info =
-      await transporter.sendMail({
-        from: getFromEmail(),
-        to,
+    const response = await fetch(BREVO_API_URL, {
+      method: 'POST',
+
+      headers: {
+        accept: 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        sender: {
+          name: fromName,
+          email: fromEmail,
+        },
+
+        to: [
+          {
+            email: to,
+          },
+        ],
+
         subject,
-        text,
-        html,
+        textContent: text,
+        htmlContent: html,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error('Brevo email failed:', {
+        status: response.status,
+        message: data?.message || 'Unknown Brevo error',
       });
 
+      throw new Error(
+        data?.message ||
+          `Brevo email request failed with status ${response.status}`
+      );
+    }
+
     console.log(
-      `Email sent successfully to ${to}. ID: ${info.messageId}`
+      `Email sent successfully through Brevo to ${to}`
     );
 
-    return true;
+    return data;
   } catch (error) {
-    console.error(
-      'SMTP email failed:',
-      error
-    );
+    console.error('Brevo email service error:', {
+      message: error?.message,
+    });
 
-    throw new Error(
-      error.message ||
-        'Failed to send email'
-    );
+    throw error;
   }
 }
-
 
 // =====================================================
 // SEND BUDGET ALERT EMAIL
@@ -97,18 +126,13 @@ async function sendBudgetAlertEmail({
   spent,
   limit,
 }) {
-  const exceeded =
-    level === 'exceeded';
+  const exceeded = level === 'exceeded';
 
-  const subject = exceeded
-    ? `ExpenseAI: ${category} budget exceeded`
-    : `ExpenseAI: ${category} budget alert`;
+  const safeName = escapeHtml(name || 'there');
+  const safeCategory = escapeHtml(category || 'Overall');
 
-  const budgetAmount =
-    Number(limit || 0);
-
-  const spentAmount =
-    Number(spent || 0);
+  const budgetAmount = Number(limit || 0);
+  const spentAmount = Number(spent || 0);
 
   const remaining = Math.max(
     budgetAmount - spentAmount,
@@ -116,29 +140,24 @@ async function sendBudgetAlertEmail({
   );
 
   const formattedBudget =
-    budgetAmount.toLocaleString(
-      'en-IN'
-    );
+    budgetAmount.toLocaleString('en-IN');
 
   const formattedSpent =
-    spentAmount.toLocaleString(
-      'en-IN'
-    );
+    spentAmount.toLocaleString('en-IN');
 
   const formattedRemaining =
-    remaining.toLocaleString(
-      'en-IN'
-    );
+    remaining.toLocaleString('en-IN');
 
-  const userName =
-    name || 'there';
+  const subject = exceeded
+    ? `ExpenseAI: ${category} budget exceeded`
+    : `ExpenseAI: ${category} budget alert`;
 
   const dashboardUrl =
     process.env.CLIENT_URL ||
     'http://localhost:5173';
 
   const text = [
-    `Hi ${userName},`,
+    `Hi ${name || 'there'},`,
     '',
     exceeded
       ? `Your ${category} budget has been exceeded.`
@@ -160,15 +179,11 @@ async function sendBudgetAlertEmail({
 <html>
 <head>
   <meta charset="UTF-8" />
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   />
-
-  <title>
-    ExpenseAI Budget Alert
-  </title>
+  <title>ExpenseAI Budget Alert</title>
 </head>
 
 <body style="
@@ -180,7 +195,6 @@ async function sendBudgetAlertEmail({
 ">
 
   <div style="
-    margin:0;
     padding:35px 15px;
     background:#f5f7fb;
   ">
@@ -194,15 +208,9 @@ async function sendBudgetAlertEmail({
       overflow:hidden;
     ">
 
-      <!-- HEADER -->
-
       <div style="
         padding:28px 30px;
-        background:linear-gradient(
-          135deg,
-          #24283f,
-          #5557dd
-        );
+        background:linear-gradient(135deg,#24283f,#5557dd);
         color:#ffffff;
       ">
 
@@ -217,49 +225,33 @@ async function sendBudgetAlertEmail({
         <h1 style="
           margin:10px 0 0;
           font-size:24px;
-          line-height:1.3;
         ">
           ${
             exceeded
-              ? 'Budget Exceeded 🚨'
-              : 'Budget Alert ⚠️'
+              ? 'Budget Exceeded'
+              : 'Budget Alert'
           }
         </h1>
 
       </div>
 
+      <div style="padding:30px;">
 
-      <!-- CONTENT -->
-
-      <div style="
-        padding:30px;
-      ">
-
-        <p style="
-          margin:0 0 14px;
-          font-size:16px;
-        ">
-          Hi
-          <strong>
-            ${userName}
-          </strong>,
+        <p style="font-size:16px;">
+          Hi <strong>${safeName}</strong>,
         </p>
 
         <p style="
-          margin:0;
           font-size:14px;
           line-height:1.7;
           color:#667085;
         ">
           ${
             exceeded
-              ? `Your <strong>${category}</strong> budget has been exceeded.`
-              : `Your <strong>${category}</strong> budget has reached <strong>${percentUsed}%</strong>.`
+              ? `Your <strong>${safeCategory}</strong> budget has been exceeded.`
+              : `Your <strong>${safeCategory}</strong> budget has reached <strong>${percentUsed}%</strong>.`
           }
         </p>
-
-
-        <!-- SUMMARY -->
 
         <div style="
           margin:25px 0;
@@ -275,10 +267,7 @@ async function sendBudgetAlertEmail({
           ">
 
             <tr>
-              <td style="
-                padding:8px 0;
-                color:#7b8498;
-              ">
+              <td style="padding:8px 0;color:#7b8498;">
                 Category
               </td>
 
@@ -287,16 +276,12 @@ async function sendBudgetAlertEmail({
                 text-align:right;
                 font-weight:700;
               ">
-                ${category}
+                ${safeCategory}
               </td>
             </tr>
 
-
             <tr>
-              <td style="
-                padding:8px 0;
-                color:#7b8498;
-              ">
+              <td style="padding:8px 0;color:#7b8498;">
                 Budget
               </td>
 
@@ -309,12 +294,8 @@ async function sendBudgetAlertEmail({
               </td>
             </tr>
 
-
             <tr>
-              <td style="
-                padding:8px 0;
-                color:#7b8498;
-              ">
+              <td style="padding:8px 0;color:#7b8498;">
                 Spent
               </td>
 
@@ -327,12 +308,8 @@ async function sendBudgetAlertEmail({
               </td>
             </tr>
 
-
             <tr>
-              <td style="
-                padding:8px 0;
-                color:#7b8498;
-              ">
+              <td style="padding:8px 0;color:#7b8498;">
                 Remaining
               </td>
 
@@ -345,12 +322,8 @@ async function sendBudgetAlertEmail({
               </td>
             </tr>
 
-
             <tr>
-              <td style="
-                padding:8px 0;
-                color:#7b8498;
-              ">
+              <td style="padding:8px 0;color:#7b8498;">
                 Usage
               </td>
 
@@ -368,22 +341,15 @@ async function sendBudgetAlertEmail({
 
         </div>
 
-
         <p style="
-          margin:0;
           font-size:14px;
           line-height:1.7;
           color:#667085;
         ">
           Review your recent expenses in
-          <strong>
-            ExpenseAI
-          </strong>
+          <strong>ExpenseAI</strong>
           and adjust your spending if needed.
         </p>
-
-
-        <!-- BUTTON -->
 
         <div style="
           text-align:center;
@@ -404,13 +370,10 @@ async function sendBudgetAlertEmail({
               font-weight:700;
             "
           >
-            View Dashboard →
+            View Dashboard
           </a>
 
         </div>
-
-
-        <!-- FOOTER -->
 
         <div style="
           margin-top:28px;
@@ -420,8 +383,7 @@ async function sendBudgetAlertEmail({
           font-size:12px;
           color:#98a2b3;
         ">
-          This is an automated notification
-          from ExpenseAI.
+          This is an automated notification from ExpenseAI.
         </div>
 
       </div>
@@ -442,7 +404,6 @@ async function sendBudgetAlertEmail({
   });
 }
 
-
 // =====================================================
 // SEND PASSWORD RESET EMAIL
 // =====================================================
@@ -459,14 +420,13 @@ async function sendPasswordResetEmail({
   const resetUrl =
     `${frontendUrl}/reset-password/${resetToken}`;
 
-  const userName =
-    name || 'there';
+  const safeName = escapeHtml(name || 'there');
 
   const subject =
     'ExpenseAI: Reset your password';
 
   const text = [
-    `Hi ${userName},`,
+    `Hi ${name || 'there'},`,
     '',
     'We received a request to reset your ExpenseAI password.',
     '',
@@ -485,15 +445,11 @@ async function sendPasswordResetEmail({
 <html>
 <head>
   <meta charset="UTF-8" />
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   />
-
-  <title>
-    Reset your ExpenseAI password
-  </title>
+  <title>Reset your ExpenseAI password</title>
 </head>
 
 <body style="
@@ -518,16 +474,9 @@ async function sendPasswordResetEmail({
       overflow:hidden;
     ">
 
-
-      <!-- HEADER -->
-
       <div style="
         padding:28px 30px;
-        background:linear-gradient(
-          135deg,
-          #24283f,
-          #5557dd
-        );
+        background:linear-gradient(135deg,#24283f,#5557dd);
         color:#ffffff;
       ">
 
@@ -548,36 +497,20 @@ async function sendPasswordResetEmail({
 
       </div>
 
+      <div style="padding:30px;">
 
-      <!-- CONTENT -->
-
-      <div style="
-        padding:30px;
-      ">
-
-        <p style="
-          font-size:16px;
-        ">
-          Hi
-          <strong>
-            ${userName}
-          </strong>,
+        <p style="font-size:16px;">
+          Hi <strong>${safeName}</strong>,
         </p>
-
 
         <p style="
           font-size:14px;
           line-height:1.7;
           color:#667085;
         ">
-          We received a request to reset your
-          ExpenseAI password.
-          Click the button below to create
-          a new password.
+          We received a request to reset your ExpenseAI password.
+          Click the button below to create a new password.
         </p>
-
-
-        <!-- BUTTON -->
 
         <div style="
           text-align:center;
@@ -598,21 +531,19 @@ async function sendPasswordResetEmail({
               font-weight:700;
             "
           >
-            Reset Password →
+            Reset Password
           </a>
 
         </div>
-
 
         <p style="
           font-size:13px;
           line-height:1.6;
           color:#667085;
         ">
-          This password reset link will expire
-          in <strong>15 minutes</strong>.
+          This password reset link will expire in
+          <strong>15 minutes</strong>.
         </p>
-
 
         <p style="
           font-size:13px;
@@ -623,9 +554,6 @@ async function sendPasswordResetEmail({
           you can safely ignore this email.
         </p>
 
-
-        <!-- FOOTER -->
-
         <div style="
           margin-top:28px;
           padding-top:20px;
@@ -634,8 +562,7 @@ async function sendPasswordResetEmail({
           font-size:12px;
           color:#98a2b3;
         ">
-          This is an automated email
-          from ExpenseAI.
+          This is an automated email from ExpenseAI.
         </div>
 
       </div>
@@ -656,7 +583,6 @@ async function sendPasswordResetEmail({
   });
 }
 
-
 // =====================================================
 // SEND EMAIL CHANGE OTP
 // =====================================================
@@ -666,16 +592,16 @@ async function sendEmailChangeOtp({
   name,
   otp,
 }) {
-  const userName =
-    name || 'there';
+  const safeName = escapeHtml(name || 'User');
+  const safeOtp = escapeHtml(otp);
 
   const subject =
     'ExpenseAI: Email Change Verification OTP';
 
   const text = [
-    `Hi ${userName},`,
+    `Hello ${name || 'User'},`,
     '',
-    'You requested to change the email address associated with your ExpenseAI account.',
+    'You requested to change your ExpenseAI email address.',
     '',
     `Your verification OTP is: ${otp}`,
     '',
@@ -691,51 +617,37 @@ async function sendEmailChangeOtp({
 <html>
 <head>
   <meta charset="UTF-8" />
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   />
-
-  <title>
-    Verify your new ExpenseAI email
-  </title>
+  <title>ExpenseAI Email Verification</title>
 </head>
-
 
 <body style="
   margin:0;
   padding:0;
   background:#f5f7fb;
   font-family:Arial,Helvetica,sans-serif;
-  color:#172033;
 ">
 
   <div style="
     padding:35px 15px;
-    background:#f5f7fb;
   ">
 
     <div style="
       max-width:600px;
-      margin:0 auto;
+      margin:auto;
       background:#ffffff;
       border:1px solid #e6e9f0;
       border-radius:18px;
       overflow:hidden;
     ">
 
-
-      <!-- HEADER -->
-
       <div style="
-        padding:28px 30px;
-        background:linear-gradient(
-          135deg,
-          #24283f,
-          #5557dd
-        );
+        background:linear-gradient(135deg,#24283f,#5557dd);
         color:#ffffff;
+        padding:28px 30px;
       ">
 
         <div style="
@@ -749,97 +661,55 @@ async function sendEmailChangeOtp({
         <h1 style="
           margin:10px 0 0;
           font-size:24px;
-          line-height:1.3;
         ">
-          Verify your new email
+          Verify your email change
         </h1>
 
       </div>
 
+      <div style="padding:30px;">
 
-      <!-- CONTENT -->
-
-      <div style="
-        padding:30px;
-      ">
-
-        <p style="
-          margin:0 0 14px;
-          font-size:16px;
-        ">
-          Hi
-          <strong>
-            ${userName}
-          </strong>,
+        <p style="font-size:16px;">
+          Hello <strong>${safeName}</strong>,
         </p>
 
-
         <p style="
-          margin:0 0 15px;
-          font-size:14px;
-          line-height:1.7;
           color:#667085;
-        ">
-          We received a request to change the
-          email address associated with your
-          ExpenseAI account.
-        </p>
-
-
-        <p style="
-          margin:0;
-          font-size:14px;
           line-height:1.7;
-          color:#667085;
         ">
-          Enter this verification code in ExpenseAI:
+          You requested to change your ExpenseAI email address.
+          Use the verification code below.
         </p>
-
-
-        <!-- OTP -->
 
         <div style="
-          margin:25px 0;
-          padding:20px;
           background:#f7f8fc;
-          border:1px solid #e6e9f0;
-          border-radius:14px;
+          color:#111827;
+          font-size:32px;
+          font-weight:bold;
+          letter-spacing:8px;
           text-align:center;
+          padding:18px;
+          margin:25px 0;
+          border-radius:10px;
         ">
-
-          <div style="
-            font-size:32px;
-            font-weight:800;
-            letter-spacing:8px;
-            color:#5557dd;
-          ">
-            ${otp}
-          </div>
-
+          ${safeOtp}
         </div>
 
-
         <p style="
-          font-size:13px;
-          line-height:1.6;
           color:#667085;
+          line-height:1.6;
         ">
-          This verification code will expire
-          in <strong>10 minutes</strong>.
+          This OTP is valid for
+          <strong>10 minutes</strong>.
         </p>
 
-
         <p style="
+          color:#98a2b3;
           font-size:13px;
-          line-height:1.6;
-          color:#667085;
         ">
           If you did not request this change,
           you can safely ignore this email.
         </p>
-
-
-        <!-- FOOTER -->
 
         <div style="
           margin-top:28px;
@@ -849,8 +719,7 @@ async function sendEmailChangeOtp({
           font-size:12px;
           color:#98a2b3;
         ">
-          This is an automated email
-          from ExpenseAI.
+          This is an automated email from ExpenseAI.
         </div>
 
       </div>
@@ -870,7 +739,6 @@ async function sendEmailChangeOtp({
     html,
   });
 }
-
 
 // =====================================================
 // EXPORTS
