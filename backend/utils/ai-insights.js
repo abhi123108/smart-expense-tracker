@@ -57,7 +57,7 @@ async function generateFinancialInsights({
     budgets || [];
 
   const model =
-    process.env.OPENAI_MODEL || "gpt-5.5";
+    process.env.OPENAI_MODEL || "gpt-5.6-luna";
 
   // ===================================================
   // DATA SENT TO AI
