@@ -17,6 +17,7 @@ const {
   requestEmailChange,
   verifyEmailChange,
   uploadProfilePhoto,
+  deleteAccount,
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/auth');
@@ -169,5 +170,20 @@ router.post(
   ),
   uploadProfilePhoto
 );
+
+// =====================================================
+// DELETE ACCOUNT
+// =====================================================
+
+// Delete account + all associated expenses + budgets
+router.delete(
+  '/account',
+  protect,
+  deleteAccount
+);
+
+// =====================================================
+// EXPORT ROUTER
+// =====================================================
 
 module.exports = router;
