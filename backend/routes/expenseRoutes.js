@@ -7,6 +7,7 @@ const {
   updateExpense,
   deleteExpense,
   getSummary,
+  getMonthlyHistory,
 } = require('../controllers/expenseController');
 const { protect } = require('../middleware/auth');
 
@@ -14,6 +15,7 @@ router.use(protect); // all expense routes require auth
 
 router.get('/summary', getSummary);
 router.route('/').post(createExpense).get(getExpenses);
+router.get("/history/monthly", protect, getMonthlyHistory);
 router.route('/:id').get(getExpenseById).put(updateExpense).delete(deleteExpense);
 
 module.exports = router;

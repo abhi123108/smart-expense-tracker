@@ -6,12 +6,12 @@ import { useAuth } from "../context/AuthContext";
 import { CategoryPieChart } from "../components/SpendingChart";
 import ExpenseList from "../components/ExpenseList";
 import BudgetAlert from "../components/BudgetAlert";
+import MonthlyExpenseHistory from "../components/MonthlyExpenseHistory";
 
 const money = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 export default function Dashboard() {
-
   /* =========================
      AUTH USER
   ========================= */
@@ -30,31 +30,25 @@ export default function Dashboard() {
 
   const [summary, setSummary] = useState(null);
 
-  const [recentExpenses, setRecentExpenses] =
-    useState([]);
+  const [recentExpenses, setRecentExpenses] = useState([]);
 
-  const [alerts, setAlerts] =
-    useState([]);
+  const [alerts, setAlerts] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   /* =========================
      LOAD DASHBOARD DATA
   ========================= */
 
   const loadData = async () => {
-
     setLoading(true);
 
     try {
-
       const [
         summaryRes,
         expensesRes,
         alertsRes,
       ] = await Promise.all([
-
         api.get("/expenses/summary"),
 
         api.get(
@@ -62,7 +56,6 @@ export default function Dashboard() {
         ),
 
         api.get("/budgets/alerts"),
-
       ]);
 
       setSummary(summaryRes.data);
@@ -74,18 +67,13 @@ export default function Dashboard() {
       setAlerts(
         alertsRes.data || []
       );
-
     } catch (err) {
-
       console.error(
         "Dashboard loading error:",
         err
       );
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
@@ -102,7 +90,6 @@ export default function Dashboard() {
   ========================= */
 
   const handleDelete = async (id) => {
-
     const confirmed = window.confirm(
       "Are you sure you want to delete this expense?"
     );
@@ -112,15 +99,12 @@ export default function Dashboard() {
     }
 
     try {
-
       await api.delete(
         `/expenses/${id}`
       );
 
       await loadData();
-
     } catch (err) {
-
       console.error(
         "Delete expense error:",
         err
@@ -129,7 +113,6 @@ export default function Dashboard() {
       alert(
         "Unable to delete this expense."
       );
-
     }
   };
 
@@ -138,7 +121,6 @@ export default function Dashboard() {
   ========================= */
 
   if (loading) {
-
     return (
       <div
         style={{
@@ -150,7 +132,6 @@ export default function Dashboard() {
         <div className="spinner" />
       </div>
     );
-
   }
 
   /* =========================
@@ -167,7 +148,6 @@ export default function Dashboard() {
       <div className="page-header">
 
         <div>
-
           <h1>
             Dashboard
           </h1>
@@ -175,7 +155,6 @@ export default function Dashboard() {
           <p>
             A clear view of where your money is going.
           </p>
-
         </div>
 
         <div className="header-actions">
@@ -188,7 +167,6 @@ export default function Dashboard() {
           </Link>
 
         </div>
-
       </div>
 
       {/* =========================
@@ -235,7 +213,9 @@ export default function Dashboard() {
         }}
       >
 
-        {/* TODAY */}
+        {/* =========================
+            TODAY
+        ========================= */}
 
         <div className="card stat-card">
 
@@ -263,7 +243,9 @@ export default function Dashboard() {
 
         </div>
 
-        {/* WEEK */}
+        {/* =========================
+            WEEK
+        ========================= */}
 
         <div className="card stat-card">
 
@@ -291,7 +273,9 @@ export default function Dashboard() {
 
         </div>
 
-        {/* MONTH */}
+        {/* =========================
+            MONTH
+        ========================= */}
 
         <div className="card stat-card">
 
@@ -419,6 +403,18 @@ export default function Dashboard() {
 
         </div>
 
+      </div>
+
+      {/* =========================
+          MONTHLY EXPENSE HISTORY
+      ========================= */}
+
+      <div
+        style={{
+          marginTop: 20,
+        }}
+      >
+        <MonthlyExpenseHistory />
       </div>
 
     </div>
