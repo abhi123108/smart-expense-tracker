@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
+    return localStorage.getItem("theme") === "dark";
   });
 
   // =====================================================
@@ -16,11 +16,11 @@ export default function Navbar() {
 
   useEffect(() => {
     if (darkMode) {
-      document.body.classList.add('dark-mode');
-      localStorage.setItem('theme', 'dark');
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.body.classList.remove('dark-mode');
-      localStorage.setItem('theme', 'light');
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
 
@@ -34,7 +34,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // =====================================================
@@ -47,8 +47,8 @@ export default function Navbar() {
     }
 
     if (
-      user.profilePicture.startsWith('http://') ||
-      user.profilePicture.startsWith('https://')
+      user.profilePicture.startsWith("http://") ||
+      user.profilePicture.startsWith("https://")
     ) {
       return user.profilePicture;
     }
@@ -63,21 +63,27 @@ export default function Navbar() {
   // =====================================================
 
   const navClass = ({ isActive }) =>
-    `nav-link ${isActive ? 'active' : ''}`;
+    `nav-link ${isActive ? "active" : ""}`;
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
     <aside className="navbar">
 
       {/* =================================================
           BRAND
-      ================================================= */}
+          ================================================= */}
 
       <div className="brand-lockup">
+
         <div className="brand-mark">
           ₹
         </div>
 
         <div>
+
           <div className="navbar-brand">
             Expense<span>AI</span>
           </div>
@@ -85,20 +91,27 @@ export default function Navbar() {
           <div className="brand-caption">
             SMART FINANCE
           </div>
+
         </div>
+
       </div>
+
 
       {/* =================================================
           WORKSPACE
-      ================================================= */}
+          ================================================= */}
 
       <div className="nav-section-label">
         Workspace
       </div>
 
+
       <nav className="nav-menu">
 
-        {/* Dashboard */}
+        {/* =================================================
+            DASHBOARD
+            ================================================= */}
+
         <NavLink
           to="/"
           end
@@ -113,7 +126,11 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Add Expense */}
+
+        {/* =================================================
+            ADD EXPENSE
+            ================================================= */}
+
         <NavLink
           to="/add"
           className={navClass}
@@ -127,7 +144,29 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Scan Receipt */}
+
+        {/* =================================================
+            EXPENSE HISTORY
+            ================================================= */}
+
+        <NavLink
+          to="/expense-history"
+          className={navClass}
+        >
+          <span className="nav-icon">
+            ◷
+          </span>
+
+          <span>
+            Expense History
+          </span>
+        </NavLink>
+
+
+        {/* =================================================
+            SCAN RECEIPT
+            ================================================= */}
+
         <NavLink
           to="/scan"
           className={navClass}
@@ -141,7 +180,11 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Reports */}
+
+        {/* =================================================
+            REPORTS & AI
+            ================================================= */}
+
         <NavLink
           to="/reports"
           className={navClass}
@@ -155,7 +198,11 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Budget */}
+
+        {/* =================================================
+            BUDGET
+            ================================================= */}
+
         <NavLink
           to="/budget"
           className={navClass}
@@ -171,15 +218,16 @@ export default function Navbar() {
 
       </nav>
 
+
       {/* =================================================
           BOTTOM AREA
-      ================================================= */}
+          ================================================= */}
 
       <div className="nav-bottom">
 
         {/* =================================================
-            DARK MODE
-        ================================================= */}
+            DARK / LIGHT MODE
+            ================================================= */}
 
         <button
           type="button"
@@ -187,32 +235,36 @@ export default function Navbar() {
           onClick={handleThemeToggle}
           aria-label={
             darkMode
-              ? 'Switch to light mode'
-              : 'Switch to dark mode'
+              ? "Switch to light mode"
+              : "Switch to dark mode"
           }
         >
+
           <span className="theme-toggle-left">
 
             <span className="theme-toggle-icon">
-              {darkMode ? '☀' : '☾'}
+              {darkMode ? "☀" : "☾"}
             </span>
 
             <span>
               {darkMode
-                ? 'Dark Mode'
-                : 'Light Mode'}
+                ? "Dark Mode"
+                : "Light Mode"}
             </span>
 
           </span>
 
+
           <span className="theme-switch">
             <span className="theme-switch-dot" />
           </span>
+
         </button>
+
 
         {/* =================================================
             SETTINGS
-        ================================================= */}
+            ================================================= */}
 
         <NavLink
           to="/settings"
@@ -227,14 +279,15 @@ export default function Navbar() {
           </span>
         </NavLink>
 
+
         {/* =================================================
             USER PROFILE
-        ================================================= */}
+            ================================================= */}
 
         <button
           type="button"
           className="user-mini"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate("/profile")}
           aria-label="Open profile"
         >
 
@@ -245,32 +298,38 @@ export default function Navbar() {
             {profileImage ? (
               <img
                 src={profileImage}
-                alt={user?.name || 'Profile'}
+                alt={user?.name || "Profile"}
                 onError={(event) => {
-                  event.currentTarget.style.display = 'none';
+                  event.currentTarget.style.display =
+                    "none";
                 }}
               />
             ) : (
               user?.name
-                ? user.name.charAt(0).toUpperCase()
-                : 'U'
+                ? user.name
+                    .charAt(0)
+                    .toUpperCase()
+                : "U"
             )}
 
           </div>
 
-          {/* User information */}
+
+          {/* User Information */}
 
           <div className="user-copy">
 
             <strong>
-              {user?.name || 'User'}
+              {user?.name || "User"}
             </strong>
 
             <span>
-              {user?.email || 'user@email.com'}
+              {user?.email ||
+                "user@email.com"}
             </span>
 
           </div>
+
 
           {/* Arrow */}
 
@@ -280,15 +339,17 @@ export default function Navbar() {
 
         </button>
 
+
         {/* =================================================
             LOGOUT
-        ================================================= */}
+            ================================================= */}
 
         <button
           type="button"
           className="logout-button"
           onClick={handleLogout}
         >
+
           <span>
             ↪
           </span>
@@ -296,6 +357,7 @@ export default function Navbar() {
           <span>
             Sign out
           </span>
+
         </button>
 
       </div>

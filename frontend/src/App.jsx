@@ -1,28 +1,34 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
-import Navbar from './components/Navbar';
+import Navbar from "./components/Navbar";
 
 // =====================================================
 // AUTH PAGES
 // =====================================================
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // =====================================================
 // APPLICATION PAGES
 // =====================================================
 
-import Dashboard from './pages/Dashboard';
-import AddExpense from './pages/AddExpense';
-import ScanBill from './pages/ScanBill';
-import Reports from './pages/Reports';
-import Budget from './pages/Budget';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
+import Dashboard from "./pages/Dashboard";
+import AddExpense from "./pages/AddExpense";
+import ScanBill from "./pages/ScanBill";
+import Reports from "./pages/Reports";
+import Budget from "./pages/Budget";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+
+// =====================================================
+// EXPENSE HISTORY
+// =====================================================
+
+import MonthlyExpenseHistory from "./pages/MonthlyExpenseHistory";
 
 // =====================================================
 // PROTECTED LAYOUT
@@ -38,6 +44,7 @@ function ProtectedLayout({ children }) {
 
   return (
     <div className="app-shell">
+
       {/* Sidebar / Navbar */}
       <Navbar />
 
@@ -45,6 +52,7 @@ function ProtectedLayout({ children }) {
       <main className="main-content">
         {children}
       </main>
+
     </div>
   );
 }
@@ -87,6 +95,7 @@ export default function App() {
           ================================================= */}
 
       {/* Dashboard */}
+
       <Route
         path="/"
         element={
@@ -96,7 +105,9 @@ export default function App() {
         }
       />
 
+
       {/* Add Expense */}
+
       <Route
         path="/add"
         element={
@@ -106,7 +117,9 @@ export default function App() {
         }
       />
 
+
       {/* Scan Receipt */}
+
       <Route
         path="/scan"
         element={
@@ -116,7 +129,9 @@ export default function App() {
         }
       />
 
+
       {/* Reports & AI */}
+
       <Route
         path="/reports"
         element={
@@ -126,7 +141,9 @@ export default function App() {
         }
       />
 
+
       {/* Budgets */}
+
       <Route
         path="/budget"
         element={
@@ -136,7 +153,23 @@ export default function App() {
         }
       />
 
+
+      {/* =================================================
+          EXPENSE HISTORY
+          ================================================= */}
+
+      <Route
+        path="/expense-history"
+        element={
+          <ProtectedLayout>
+            <MonthlyExpenseHistory />
+          </ProtectedLayout>
+        }
+      />
+
+
       {/* Profile */}
+
       <Route
         path="/profile"
         element={
@@ -146,9 +179,8 @@ export default function App() {
         }
       />
 
-      {/* =================================================
-          SETTINGS
-          ================================================= */}
+
+      {/* Settings */}
 
       <Route
         path="/settings"

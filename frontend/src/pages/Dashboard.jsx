@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import { CategoryPieChart } from "../components/SpendingChart";
 import ExpenseList from "../components/ExpenseList";
 import BudgetAlert from "../components/BudgetAlert";
-import MonthlyExpenseHistory from "../components/MonthlyExpenseHistory";
 
 const money = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -303,9 +302,11 @@ export default function Dashboard() {
 
               {summary.overallBudget.percentUsed}
               % of{" "}
+
               {money(
                 summary.overallBudget.limit
               )}
+
               {" "}budget
 
             </div>
@@ -382,8 +383,7 @@ export default function Dashboard() {
               to="/add"
               className="muted"
               style={{
-                color:
-                  "var(--primary)",
+                color: "var(--primary)",
                 fontWeight: 800,
               }}
             >
@@ -406,15 +406,40 @@ export default function Dashboard() {
       </div>
 
       {/* =========================
-          MONTHLY EXPENSE HISTORY
+          EXPENSE HISTORY LINK
       ========================= */}
 
       <div
+        className="card"
         style={{
           marginTop: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 20,
+          flexWrap: "wrap",
         }}
       >
-        <MonthlyExpenseHistory />
+
+        <div>
+
+          <h3>
+            Expense History
+          </h3>
+
+          <div className="muted">
+            View and analyze your monthly spending.
+          </div>
+
+        </div>
+
+        <Link
+          to="/expense-history"
+          className="btn btn-primary"
+        >
+          View Expense History →
+        </Link>
+
       </div>
 
     </div>
