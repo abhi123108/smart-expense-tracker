@@ -11,6 +11,7 @@ const ocrRoutes = require('./routes/ocrRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const accountRoutes = require("./routes/accountRoutes");
 
 function createApp() {
   const app = express();
@@ -70,6 +71,7 @@ function createApp() {
   // IMPORTANT:
   // Profile photo upload/delete routes
   app.use('/api/profile', profileRoutes);
+  app.use("/api/accounts", accountRoutes);
 
   // =====================================================
   // ERROR HANDLING
