@@ -12,6 +12,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const accountRoutes = require("./routes/accountRoutes");
+const incomeRoutes = require("./routes/incomeRoutes");
 
 function createApp() {
   const app = express();
@@ -72,6 +73,7 @@ function createApp() {
   // Profile photo upload/delete routes
   app.use('/api/profile', profileRoutes);
   app.use("/api/accounts", accountRoutes);
+  app.use("/api/income", incomeRoutes);
 
   // =====================================================
   // ERROR HANDLING
